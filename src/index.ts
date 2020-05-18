@@ -1,4 +1,4 @@
-import { gameLoop } from './game'
+import { gameLoop, nextTurn } from './game'
 import { logger } from './util/logger'
 import { newGame } from './init-game'
 import { Model } from './model'
@@ -43,6 +43,8 @@ logRound('next9', next9)
 
 const next10 = gameLoop('roll', next9)
 logRound('next10', next10)
+
+logger.info('ui-model', toUI(next10))
 
 // TODO
 // round end

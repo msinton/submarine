@@ -5,7 +5,7 @@ import { ReadonlyNonEmptyArray } from 'fp-ts/lib/ReadonlyNonEmptyArray'
 import * as NEA from 'fp-ts/lib/ReadonlyNonEmptyArray'
 import { getOrElse } from 'fp-ts/lib/Option'
 import * as O from 'fp-ts/lib/Option'
-import { Model, Player, Position, startIndex } from './model'
+import { Model, Player, Position, startIndex, TurnPhase } from './model'
 import updates from './update'
 import { logger } from './util/logger'
 import { mergeRight } from 'ramda'
@@ -72,18 +72,19 @@ const handleStartAction = (action: StartAction, game: Model): Model => {
   const returned = update.position === 'returned'
 
   return pipe(
-    returned ? nextTurn(game) : game,
-    mergeRight({
+    {
       ...depleteOxygen(game),
       round: {
         ...round,
+        phase: 'end' as TurnPhase,
         positions: {
           ...game.round.positions,
           [player]: update.position,
         },
         roll: update.roll,
       },
-    })
+    },
+    mergeRight(returned ? nextTurn(game) : game)
   )
 }
 
