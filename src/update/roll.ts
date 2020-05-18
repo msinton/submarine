@@ -50,14 +50,18 @@ const nextSpace = (
   target: number,
   returning: boolean,
   model: Model
-) =>
-  returning
+) => {
+  if (currentSpace === target) {
+    return currentSpace
+  }
+  return returning
     ? nextBackwardSpace(target, Object.values(model.round.positions))
     : pipe(
         maxAvailableSpace(currentSpace, model),
         m => { logger.info('max', { m }); return m },
         (maxSpace) => nextForwardSpace({ maxSpace, target, positions: Object.values(model.round.positions) })
       )
+    }
 
 export const update = (
   { space, returning }: ActivePosition,

@@ -17,7 +17,7 @@ export type Replace = {
 // TODO consider tidy up of action handlers - to include types
 type StartAction = 'roll' | 'return'
 type EndAction = 'pickup' | Replace | 'no-action'
-type Action = StartAction | EndAction
+export type Action = StartAction | EndAction
 
 const rotateToNextPlayer = ({
   players,

@@ -1,13 +1,27 @@
-import { gameLoop, nextTurn } from './game'
+import { gameLoop, nextTurn, Action } from './game'
 import { logger } from './util/logger'
 import { newGame } from './init-game'
 import { Model } from './model'
 import { toUI } from './ui'
+import { reduce as fpReduce } from 'fp-ts/lib/Array'
+
+const reduce = <A, B>(b: B, f: (b: B, a: A) => B, fa: A[]): B =>
+  fpReduce<A, B>(b, f)(fa)
 
 const logRound = (msg: string, { round, players }: Model) =>
   logger.info(msg, { round, players })
 
 // example game
+
+const sequence = (actions: Array<Action>, game: Model): Model =>
+  reduce(
+    game,
+    (game, action) => {
+      logger.info('game, next action', { action, game })
+      return gameLoop(action, game)
+    },
+    actions
+  )
 
 const game = newGame(['bob', 'sally'])
 logger.info('server-side-game entity', game)
@@ -45,6 +59,56 @@ const next10 = gameLoop('roll', next9)
 logRound('next10', next10)
 
 logger.info('ui-model', toUI(next10))
+
+logger.info('---------------------------------------------------------------')
+
+sequence(
+  [
+    'roll',
+    'no-action',
+    'roll',
+    'no-action',
+    'roll',
+    'pickup',
+    'roll',
+    'pickup',
+    'roll',
+    'pickup',
+    'roll',
+    'pickup',
+    'roll',
+    'pickup',
+    'roll',
+    'pickup',
+    'roll',
+    'pickup',
+    'roll',
+    'pickup',
+    'roll',
+    'pickup',
+    'roll',
+    'pickup',
+    'roll',
+    'pickup',
+    'roll',
+    'pickup',
+    'roll',
+    'pickup',
+    'roll',
+    'pickup',
+    'roll',
+    'pickup',
+    'roll',
+    'pickup',
+    'roll',
+    'pickup',
+    'roll',
+    'pickup',
+    'roll',
+    'pickup',
+  ],
+  newGame(['bob', 'sally', 'fred'])
+)
 
 // TODO
 // round end
