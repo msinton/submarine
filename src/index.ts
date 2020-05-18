@@ -45,9 +45,6 @@ const next10 = gameLoop('roll', next9)
 logRound('next10', next10)
 
 // TODO
-// - return
-// - replace
-// depleteOxygen
 // round end
 //  - safe = discover treasures
 //  - oxy (do drowning)

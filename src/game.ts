@@ -8,8 +8,9 @@ import * as O from 'fp-ts/lib/Option'
 import { Model, Player, Position, startIndex } from './model'
 import updates from './update'
 import { logger } from './util/logger'
+import { mergeRight } from 'ramda'
 
-type Replace = {
+export type Replace = {
   collectedIndex: number
 }
 
@@ -44,6 +45,15 @@ export const containsPlayer = (
 ): boolean =>
   positions.some((x) => (x === 'returned' ? false : x.space === targetSpace))
 
+const depleteOxygen = (
+  game: Pick<Model, 'submarine' | 'players'>
+): Pick<Model, 'submarine'> => ({
+  submarine: {
+    oxygen:
+      game.submarine.oxygen - currentPlayer(game).collectedTreasures.length,
+  },
+})
+
 const handleStartAction = (action: StartAction, game: Model): Model => {
   const { round } = game
   const player = currentPlayer(game).name
@@ -61,67 +71,64 @@ const handleStartAction = (action: StartAction, game: Model): Model => {
 
   const returned = update.position === 'returned'
 
-  const players = returned ? rotateToNextPlayer(game) : game.players
-
-  return {
-    ...game,
-    players,
-    round: {
-      ...round,
-      phase: returned ? 'start' : 'end',
-      positions: {
-        ...game.round.positions,
-        [player]: update.position,
+  return pipe(
+    returned ? nextTurn(game) : game,
+    mergeRight({
+      ...depleteOxygen(game),
+      round: {
+        ...round,
+        positions: {
+          ...game.round.positions,
+          [player]: update.position,
+        },
+        roll: update.roll,
       },
-      roll: update.roll,
-    },
-  }
+    })
+  )
 }
 
-const handleEndAction = (action: EndAction, game: Model): Model => {
-  const { round } = game
-  const player = NEA.head(game.players).name
-  const position = game.round.positions[player]!
-  const players = rotateToNextPlayer(game)
+export const nextTurn = (game: Model): Model => ({
+  ...game,
+  players: rotateToNextPlayer(game),
+  round: {
+    ...game.round,
+    phase: 'start',
+    roll: undefined,
+  },
+})
 
-  const gameWithNextTurnUpdate: Model = {
-    ...game,
-    players,
-    round: {
-      ...round,
-      phase: 'start',
-      roll: undefined,
-    },
-  }
+export const updateCurrentPlayer = (f: (a: Player) => Player) => (
+  game: Pick<Model, 'players'>
+): Pick<Model, 'players'> => ({
+  players: NEA.cons(f(currentPlayer(game)), [...NEA.tail(game.players)]),
+})
+
+const handleEndAction = (action: EndAction, game: Model): Model => {
+  const player = NEA.head(game.players)
+  const position = game.round.positions[player.name]!
 
   if (position === 'returned') {
-    return gameWithNextTurnUpdate
+    return nextTurn(game)
   }
 
   switch (action) {
     case 'no-action':
-      return gameWithNextTurnUpdate
+      return nextTurn(game)
 
-    case 'pickup': {
+    case 'pickup':
       return pipe(
         updates.pickup(position, game),
-        O.map(
-          ({ players, spaces }): Model => ({
-            ...gameWithNextTurnUpdate,
-            players: rotateToNextPlayer({ players, round }),
-            spaces,
-          })
-        ),
-        getOrElse(() => gameWithNextTurnUpdate)
+        O.fold(() => game, mergeRight(game)),
+        nextTurn
       )
-    }
 
     default:
-      // const { collectedIndex } = action as Replace
-      // check current space is an empty
-      // remove from collected
-      // replace current space
-      return game
+      // remaining case is Replace action
+      return pipe(
+        updates.replace(action, player, position, game),
+        O.fold(() => game, mergeRight(game)),
+        nextTurn
+      )
   }
 }
 
