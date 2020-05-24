@@ -26,10 +26,14 @@ const shuffleTreasures: () => Array<SingleTreasure> = () =>
     )
   )
 
-export const initModel: () => Omit<Model, 'players' | 'round'> = () => ({
+export const initialSubmarine = {
   submarine: {
     oxygen: 25,
   },
+}
+
+export const initModel: () => Omit<Model, 'players' | 'round'> = () => ({
+  ...initialSubmarine,
   spaces: shuffleTreasures(),
 })
 

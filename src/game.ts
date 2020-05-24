@@ -1,14 +1,22 @@
 /* eslint-disable indent */
 import { pipe } from 'fp-ts/lib/pipeable'
-import { rotate } from 'fp-ts/lib/Array'
+import { rotate, chain } from 'fp-ts/lib/Array'
 import { ReadonlyNonEmptyArray } from 'fp-ts/lib/ReadonlyNonEmptyArray'
 import * as NEA from 'fp-ts/lib/ReadonlyNonEmptyArray'
 import { getOrElse } from 'fp-ts/lib/Option'
 import * as O from 'fp-ts/lib/Option'
-import { Model, Player, Position, startIndex, TurnPhase } from './model'
+import {
+  Model,
+  Player,
+  Position,
+  startIndex,
+  TurnPhase,
+  Treasure,
+  isTreasureStack,
+} from './model'
 import updates from './update'
 import { logger } from './util/logger'
-import { mergeRight } from 'ramda'
+import { mergeRight, mapObjIndexed } from 'ramda'
 
 export type Replace = {
   collectedIndex: number
@@ -144,10 +152,18 @@ const isEndAction = (arg: Action): arg is EndAction =>
 export const currentPlayer = ({ players }: Pick<Model, 'players'>): Player =>
   NEA.head(players)
 
+const handleAction = (action: Action, game: Model): Model => {
+  switch (game.round.phase) {
+    case 'start':
+      return isStartAction(action) ? handleStartAction(action, game) : game
+
+    case 'end':
+      return isEndAction(action) ? handleEndAction(action, game) : game
+  }
+}
+
 export const gameLoop = (action: Action, game: Model): Model => {
-  const { round } = game
   const position = game.round.positions[currentPlayer(game).name]!
-  const { phase } = round
 
   if (position === 'returned') {
     // TODO...
@@ -155,11 +171,5 @@ export const gameLoop = (action: Action, game: Model): Model => {
     return game
   }
 
-  switch (phase) {
-    case 'start':
-      return isStartAction(action) ? handleStartAction(action, game) : game
-
-    case 'end':
-      return isEndAction(action) ? handleEndAction(action, game) : game
-  }
+  return pipe(handleAction(action, game), updates.roundEnd)
 }

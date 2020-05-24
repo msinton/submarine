@@ -51,7 +51,7 @@ export type TurnPhase = 'start' | 'end'
 export type Round = {
   phase: TurnPhase
   number: number
-  positions: { [key: string]: Position }
+  positions: { [key: string]: Position } // TODO players: {position, treasures}
   roll?: Roll
 }
 
