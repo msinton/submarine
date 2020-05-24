@@ -35,11 +35,12 @@ export const initialSubmarine = {
 export const initModel: () => Omit<Model, 'players' | 'round'> = () => ({
   ...initialSubmarine,
   spaces: shuffleTreasures(),
+  ended: false,
 })
 
 export const initPlayer = (name: string): Player => ({
   name,
-  collectedTreasures: [],
+  holdingTreasures: [],
   discoveredTreasures: [],
 })
 

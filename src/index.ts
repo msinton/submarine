@@ -1,9 +1,14 @@
 import { gameLoop, nextTurn, Action } from './game'
 import { logger } from './util/logger'
 import { newGame } from './init-game'
-import { Model } from './model'
+import { Model, Player, Treasure, SingleTreasure, UIPlayer } from './model'
 import { toUI } from './ui'
-import { reduce as fpReduce } from 'fp-ts/lib/Array'
+import { reduce as fpReduce, foldMap, map } from 'fp-ts/lib/Array'
+import * as NEA from 'fp-ts/lib/ReadonlyNonEmptyArray'
+
+import { monoidSum } from 'fp-ts/lib/Monoid'
+import { pipe } from 'fp-ts/lib/pipeable'
+import { flow } from 'fp-ts/lib/function'
 
 const reduce = <A, B>(b: B, f: (b: B, a: A) => B, fa: A[]): B =>
   fpReduce<A, B>(b, f)(fa)
@@ -52,7 +57,7 @@ logRound('next7', next7)
 const next8 = gameLoop('return', next7)
 logRound('next8', next8)
 
-const next9 = gameLoop({ collectedIndex: 0 }, next8)
+const next9 = gameLoop({ holdingIndex: 0 }, next8)
 logRound('next9', next9)
 
 const next10 = gameLoop('roll', next9)
@@ -62,7 +67,7 @@ logger.info('ui-model', toUI(next10))
 
 logger.info('---------------------------------------------------------------')
 
-sequence(
+const result = sequence(
   [
     'roll',
     'no-action',
@@ -71,6 +76,28 @@ sequence(
     'roll',
     'no-action',
     'roll',
+    'no-action',
+    'roll',
+    'pickup',
+    'return',
+    'pickup',
+    'roll',
+    'no-action',
+    'roll',
+    'no-action',
+    'roll',
+    'pickup',
+    'return',
+    'pickup',
+    'return',
+    'no-action',
+    'roll',
+    'pickup',
+    'roll',
+    'pickup',
+    'roll',
+    'pickup',
+    'roll',
     'pickup',
     'roll',
     'pickup',
@@ -84,39 +111,116 @@ sequence(
     'pickup',
     'return',
     'pickup',
+    'roll',
+    'no-action',
+    'roll',
+    'no-action',
+    'roll',
+    'no-action',
+    'roll',
+    'no-action',
+    'roll',
+    'pickup',
+    'roll',
+    'pickup',
+    'roll',
+    'pickup',
     'return',
-    'pickup',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'roll',
+    'no-action',
     'roll',
     'pickup',
     'roll',
-    'pickup',
+    'no-action',
+    'roll',
+    'no-action',
     'roll',
     'pickup',
     'roll',
-    'pickup',
-    'roll',
-    'pickup',
-    'roll',
-    'pickup',
-    'roll',
-    'pickup',
-    'roll',
-    'pickup',
-    'roll',
-    'pickup',
-    'roll',
-    'pickup',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
+    'no-action',
+    'return',
   ],
   newGame(['bob', 'sally', 'fred'])
 )
 
 // TODO
-// round end
-//  - safe = discover treasures
-//  - oxy (do drowning)
-// game end
-
-// check turn rotation when some players back
+// penalty in model
 // check treasure penalty
 
-// logger.info('scores', totalScores(toUI(game)))
+const totalScores = (
+  players: NEA.ReadonlyNonEmptyArray<UIPlayer>
+): NEA.ReadonlyNonEmptyArray<{
+  [key: string]: number
+}> =>
+  pipe(
+    players,
+    NEA.map((p: UIPlayer) => ({
+      [p.name]: pipe(
+        p.discoveredTreasures,
+        foldMap(monoidSum)((x: SingleTreasure) => x.value)
+      ),
+    }))
+  )
+
+logger.info('scores', totalScores(toUI(result).players))

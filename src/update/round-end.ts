@@ -7,20 +7,22 @@ import { Model, Player, Treasure, isTreasureStack, Space } from '../model'
 import { when, sortBy, mergeAll } from 'ramda'
 import { initialSubmarine } from '../init-game'
 
-const moveCollectedTreasuresToDiscovered = (player: Player): Player => ({
+const totalRounds = 3
+
+const moveholdingTreasuresToDiscovered = (player: Player): Player => ({
   ...player,
-  collectedTreasures: [],
+  holdingTreasures: [],
   discoveredTreasures: pipe(
     chain((x: Treasure) => (isTreasureStack(x) ? [...x] : [x]))(
-      player.collectedTreasures
+      player.holdingTreasures
     ),
     (x) => x.concat(player.discoveredTreasures)
   ),
 })
 
-const removeCollectedTreasures = (player: Player): Player => ({
+const removeholdingTreasures = (player: Player): Player => ({
   ...player,
-  collectedTreasures: [],
+  holdingTreasures: [],
 })
 
 const isRoundEnd = ({
@@ -28,7 +30,7 @@ const isRoundEnd = ({
   round,
 }: Pick<Model, 'submarine' | 'round'>): boolean =>
   submarine.oxygen <= 0 ||
-  Object.keys(round.positions).every((x) => x === 'returned')
+  Object.values(round.positions).every((x) => x === 'returned')
 
 const updatePlayers = ({
   players,
@@ -36,8 +38,8 @@ const updatePlayers = ({
 }: Pick<Model, 'players' | 'round'>): Pick<Model, 'players'> => ({
   players: NEA.map((player: Player) =>
     round.positions[player.name] === 'returned'
-      ? moveCollectedTreasuresToDiscovered(player)
-      : removeCollectedTreasures(player)
+      ? moveholdingTreasuresToDiscovered(player)
+      : removeholdingTreasures(player)
   )(players),
 })
 
@@ -54,12 +56,15 @@ const updateRound = ({
   round: {
     ...round,
     phase: 'start',
-    number: round.number + 1,
-    positions: pipe(
-      sortPlayersByFurthest({ round }),
-      map(([name]) => ({ [name]: { space: -1, returning: false } })),
-      mergeAll
-    ),
+    number: Math.min(round.number + 1, totalRounds),
+    positions:
+      round.number === totalRounds
+        ? round.positions // don't update when game ended
+        : pipe(
+            sortPlayersByFurthest({ round }),
+            map(([name]) => ({ [name]: { space: -1, returning: false } })),
+            mergeAll
+          ),
   },
 })
 
@@ -74,9 +79,11 @@ const stackTreasures = (xs: Array<Treasure>): Array<Treasure> =>
 
 // TODO consider fp Record - map values?
 // TODO the last already present stack should be added to
-const updateSpaces: (
-  game: Pick<Model, 'spaces' | 'players' | 'round'>
-) => Pick<Model, 'spaces'> = ({ spaces, round, players }) =>
+const updateSpaces = ({
+  spaces,
+  round,
+  players,
+}: Pick<Model, 'spaces' | 'players' | 'round'>): Pick<Model, 'spaces'> =>
   pipe(
     spaces,
     filter((x: Space) => x !== 'emptySpace'),
@@ -86,13 +93,16 @@ const updateSpaces: (
         sortPlayersByFurthest({ round }),
         filter(([name]) => round.positions[name] !== 'returned'),
         chain(
-          ([name]) => players.find((x) => x.name === name)!.collectedTreasures
+          ([name]) => players.find((x) => x.name === name)!.holdingTreasures
         ),
         stackTreasures
       ),
     ],
     (spaces) => ({ spaces })
   )
+
+const updateGameEnded = (game: Pick<Model, 'round'>): Pick<Model, 'ended'> =>
+  game.round.number === 3 ? { ended: true } : { ended: false }
 
 export const update = (game: Model): Model =>
   when(
@@ -103,6 +113,7 @@ export const update = (game: Model): Model =>
       ...updatePlayers(game),
       ...updateRound(game),
       ...updateSpaces(game),
+      ...updateGameEnded(game),
     }),
     game
   )

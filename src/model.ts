@@ -27,13 +27,13 @@ export type UISpace = HiddenTreasure | 'emptySpace'
 
 export type Player = {
   name: string
-  collectedTreasures: Array<Treasure>
+  holdingTreasures: Array<Treasure>
   discoveredTreasures: Array<SingleTreasure>
 }
 
 export type UIPlayer = {
   name: string
-  collectedTreasures: Array<HiddenTreasure>
+  holdingTreasures: Array<HiddenTreasure>
   discoveredTreasures: Array<SingleTreasure>
 }
 
@@ -60,6 +60,7 @@ export type Model = {
   submarine: Submarine
   spaces: Array<Space>
   round: Round
+  ended: boolean
 }
 
 export type UIModel = Omit<Model, 'spaces' | 'players'> & {

@@ -1,6 +1,5 @@
-/* eslint-disable indent */
 import { pipe } from 'fp-ts/lib/pipeable'
-import { rotate, chain } from 'fp-ts/lib/Array'
+import { rotate } from 'fp-ts/lib/Array'
 import { ReadonlyNonEmptyArray } from 'fp-ts/lib/ReadonlyNonEmptyArray'
 import * as NEA from 'fp-ts/lib/ReadonlyNonEmptyArray'
 import { getOrElse } from 'fp-ts/lib/Option'
@@ -11,15 +10,14 @@ import {
   Position,
   startIndex,
   TurnPhase,
-  Treasure,
-  isTreasureStack,
+  ActivePosition,
 } from './model'
 import updates from './update'
 import { logger } from './util/logger'
-import { mergeRight, mapObjIndexed } from 'ramda'
+import { mergeRight, when, tap } from 'ramda'
 
 export type Replace = {
-  collectedIndex: number
+  holdingIndex: number
 }
 
 // TODO consider tidy up of action handlers - to include types
@@ -27,21 +25,25 @@ type StartAction = 'roll' | 'return'
 type EndAction = 'pickup' | Replace | 'no-action'
 export type Action = StartAction | EndAction
 
-const rotateToNextPlayer = ({
+// TODO test
+// prettier-ignore
+export const rotateToNextPlayer = ({
   players,
   round,
 }: Pick<Model, 'players' | 'round'>): ReadonlyNonEmptyArray<Player> => {
   const loop = (players: Array<Player>, attempts: number): Array<Player> =>
     attempts === 0
       ? players
-      : pipe(players, rotate(1), (xs) =>
-          round.positions[xs[0].name] === 'returned'
-            ? loop(players, attempts - 1)
-            : xs
+      : pipe(
+          players,
+          rotate(-1),
+          (xs) => round.positions[xs[0].name] === 'returned'
+              ? loop(xs, attempts - 1)
+              : xs
         )
 
   return pipe(
-    loop([...players.values()], players.length - 1),
+    loop([...players.values()], players.length),
     NEA.fromArray,
     getOrElse(() => players)
   )
@@ -57,8 +59,7 @@ const depleteOxygen = (
   game: Pick<Model, 'submarine' | 'players'>
 ): Pick<Model, 'submarine'> => ({
   submarine: {
-    oxygen:
-      game.submarine.oxygen - currentPlayer(game).collectedTreasures.length,
+    oxygen: game.submarine.oxygen - currentPlayer(game).holdingTreasures.length,
   },
 })
 
@@ -68,6 +69,10 @@ const handleStartAction = (action: StartAction, game: Model): Model => {
   const position = game.round.positions[player]!
 
   if (position === 'returned') {
+    logger.error('Unexpected start action for returned player', {
+      player,
+      action,
+    })
     return game
   }
   const { space } = position
@@ -81,6 +86,7 @@ const handleStartAction = (action: StartAction, game: Model): Model => {
 
   return pipe(
     {
+      ...game,
       ...depleteOxygen(game),
       round: {
         ...round,
@@ -92,7 +98,7 @@ const handleStartAction = (action: StartAction, game: Model): Model => {
         roll: update.roll,
       },
     },
-    mergeRight(returned ? nextTurn(game) : game)
+    when(() => returned, nextTurn)
   )
 }
 
@@ -116,29 +122,32 @@ const handleEndAction = (action: EndAction, game: Model): Model => {
   const player = NEA.head(game.players)
   const position = game.round.positions[player.name]!
 
-  if (position === 'returned') {
-    return nextTurn(game)
-  }
+  const pickupUpdate = (position: ActivePosition): ((m: Model) => Model) =>
+    when(
+      () => action === 'pickup',
+      (game) =>
+        pipe(
+          updates.pickup(position, game),
+          O.fold(() => game, mergeRight(game))
+        )
+    )
 
-  switch (action) {
-    case 'no-action':
-      return nextTurn(game)
+  const replaceUpdate = (position: ActivePosition): ((m: Model) => Model) =>
+    when(
+      () => (action as Replace).holdingIndex !== undefined,
+      (game) =>
+        pipe(
+          updates.replace(action as Replace, player, position, game),
+          O.fold(() => game, mergeRight(game))
+        )
+    )
 
-    case 'pickup':
-      return pipe(
-        updates.pickup(position, game),
-        O.fold(() => game, mergeRight(game)),
-        nextTurn
-      )
-
-    default:
-      // remaining case is Replace action
-      return pipe(
-        updates.replace(action, player, position, game),
-        O.fold(() => game, mergeRight(game)),
-        nextTurn
-      )
-  }
+  return pipe(
+    position === 'returned'
+      ? game
+      : pipe(game, pickupUpdate(position), replaceUpdate(position)),
+    nextTurn
+  )
 }
 
 const isStartAction = (arg: Action): arg is StartAction =>
@@ -147,12 +156,12 @@ const isStartAction = (arg: Action): arg is StartAction =>
 const isEndAction = (arg: Action): arg is EndAction =>
   arg === 'no-action' ||
   arg === 'pickup' ||
-  Object.keys(arg) === ['collectedIndex']
+  Object.keys(arg) === ['holdingIndex']
 
 export const currentPlayer = ({ players }: Pick<Model, 'players'>): Player =>
   NEA.head(players)
 
-const handleAction = (action: Action, game: Model): Model => {
+const handleAction = (action: Action) => (game: Model): Model => {
   switch (game.round.phase) {
     case 'start':
       return isStartAction(action) ? handleStartAction(action, game) : game
@@ -162,14 +171,20 @@ const handleAction = (action: Action, game: Model): Model => {
   }
 }
 
-export const gameLoop = (action: Action, game: Model): Model => {
+const warnInvalidState = (game: Model): void => {
   const position = game.round.positions[currentPlayer(game).name]!
-
   if (position === 'returned') {
-    // TODO...
-    logger.error('should not have action for player returned') // TODO though allow at game end
-    return game
+    logger.error('should not have action for player returned')
   }
+}
 
-  return pipe(handleAction(action, game), updates.roundEnd)
+export const gameLoop = (action: Action, game: Model): Model => {
+  return pipe(
+    game,
+    O.fromPredicate((game: Model) => !game.ended),
+    O.map(tap(warnInvalidState)),
+    O.map(handleAction(action)),
+    O.map(updates.roundEnd),
+    O.getOrElse(() => game)
+  )
 }

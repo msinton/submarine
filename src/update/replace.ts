@@ -6,29 +6,29 @@ import { Option, getOrElse } from 'fp-ts/lib/Option'
 import { Model, Player, Space, ActivePosition } from '../model'
 import { Replace, updateCurrentPlayer } from '../game'
 
-const removeTreasure = (collectedIndex: number, player: Player): Player => ({
+const removeTreasure = (holdingIndex: number, player: Player): Player => ({
   ...player,
-  collectedTreasures: pipe(
-    player.collectedTreasures,
-    deleteAt(collectedIndex),
-    getOrElse(() => player.collectedTreasures)
+  holdingTreasures: pipe(
+    player.holdingTreasures,
+    deleteAt(holdingIndex),
+    getOrElse(() => player.holdingTreasures)
   ),
 })
 
 export const update = (
-  { collectedIndex }: Replace,
+  { holdingIndex }: Replace,
   player: Player,
   position: ActivePosition,
   game: Pick<Model, 'spaces' | 'players'>
 ): Option<Pick<Model, 'spaces' | 'players'>> =>
   pipe(
-    lookup(collectedIndex, player.collectedTreasures),
+    lookup(holdingIndex, player.holdingTreasures),
     O.filter(() => game.spaces[position.space] === 'emptySpace'),
     O.chain((treasure) =>
       updateAt<Space>(position.space, treasure)(game.spaces)
     ),
     O.map((spaces) => ({
       spaces,
-      ...updateCurrentPlayer((p) => removeTreasure(collectedIndex, p))(game),
+      ...updateCurrentPlayer((p) => removeTreasure(holdingIndex, p))(game),
     }))
   )

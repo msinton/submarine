@@ -3,6 +3,7 @@ module.exports = {
     commonjs: true,
     es6: true,
     es2020: true,
+    jest: true,
   },
   extends: ['standard'],
   globals: {
@@ -17,5 +18,6 @@ module.exports = {
   rules: {
     'comma-dangle': 0,
     'no-unused-vars': 0,
+    indent: 0,
   },
 }

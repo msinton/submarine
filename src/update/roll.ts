@@ -68,7 +68,7 @@ export const update = (
   game: Model
 ): { position: Position; roll: Roll } => {
   const rolled = roll()
-  const penalty = currentPlayer(game).collectedTreasures.length || 0
+  const penalty = currentPlayer(game).holdingTreasures.length || 0
   const rollTotal = Math.max(0, rolled.die1 + rolled.die2 - penalty)
   const directionMutliplier = returning ? -1 : 1
 

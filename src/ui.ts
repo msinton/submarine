@@ -32,7 +32,7 @@ const hideTreasureInSpace = (space: Space): UISpace =>
 
 const uiPlayer = (player: Player): UIPlayer => ({
   ...player,
-  collectedTreasures: map(hideTreasure)(player.collectedTreasures),
+  holdingTreasures: map(hideTreasure)(player.holdingTreasures),
 })
 
 export const toUI = (model: Model): UIModel => ({

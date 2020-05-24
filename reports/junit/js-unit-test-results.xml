@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="8" failures="0" time="2.518">
+  <testsuite name="rotateToNextPlayer" errors="0" failures="0" skipped="0" timestamp="2020-05-24T19:23:39" time="2.472" tests="8">
+    <testcase classname="rotateToNextPlayer when 2 players not returned, rotates to other player" name="rotateToNextPlayer when 2 players not returned, rotates to other player" time="0.002">
+    </testcase>
+    <testcase classname="rotateToNextPlayer when 2 players current returned, rotates to next player" name="rotateToNextPlayer when 2 players current returned, rotates to next player" time="0.001">
+    </testcase>
+    <testcase classname="rotateToNextPlayer when 2 players other returned, stays on player" name="rotateToNextPlayer when 2 players other returned, stays on player" time="0">
+    </testcase>
+    <testcase classname="rotateToNextPlayer when 3 players none returned, rotates to 2nd player" name="rotateToNextPlayer when 3 players none returned, rotates to 2nd player" time="0">
+    </testcase>
+    <testcase classname="rotateToNextPlayer when 3 players others returned, stays on player" name="rotateToNextPlayer when 3 players others returned, stays on player" time="0.001">
+    </testcase>
+    <testcase classname="rotateToNextPlayer when 3 players - 2nd returned, rotates to 3rd player" name="rotateToNextPlayer when 3 players - 2nd returned, rotates to 3rd player" time="0">
+    </testcase>
+    <testcase classname="rotateToNextPlayer when 3 players - 3rd returned, rotates to 2nd player" name="rotateToNextPlayer when 3 players - 3rd returned, rotates to 2nd player" time="0">
+    </testcase>
+    <testcase classname="rotateToNextPlayer when 3 players - all returned, no change" name="rotateToNextPlayer when 3 players - all returned, no change" time="0">
+    </testcase>
+  </testsuite>
+</testsuites>

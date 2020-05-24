@@ -6,16 +6,18 @@
   "scripts": {
     "start": "tsc && node dist/index.js",
     "start-dev": "npx ts-node-dev --no-notify --type-check ./src/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:unit": "jest -c jest.conf.unit.json",
     "lint": "npx eslint ./src/**/*.ts"
   },
   "author": "matt sinton-hewitt",
   "license": "ISC",
   "dependencies": {
     "fp-ts": "^2.6.1",
+    "ramda": "^0.27.0",
     "winston": "^3.2.1"
   },
   "devDependencies": {
+    "@types/jest": "^25.2.3",
     "@types/ramda": "^0.27.5",
     "@typescript-eslint/eslint-plugin": "^2.33.0",
     "@typescript-eslint/parser": "^2.33.0",
@@ -28,7 +30,9 @@
     "eslint-plugin-prefer-arrow": "^1.2.1",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.1",
-    "ramda": "^0.27.0",
+    "jest": "^26.0.1",
+    "jest-junit": "^10.0.0",
+    "ts-jest": "^26.0.0",
     "ts-node-dev": "^1.0.0-pre.44",
     "typescript": "^3.9.2"
   }

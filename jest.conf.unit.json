@@ -1,0 +1,16 @@
+{
+  "preset": "ts-jest",
+  "rootDir": "src",
+  "testEnvironment": "node",
+  "testRegex": ".(test|spec)\\.(jsx?|tsx?)$",
+  "reporters": [
+    "default",
+    [
+      "jest-junit",
+      {
+        "outputDirectory": "reports/junit",
+        "outputName": "js-unit-test-results.xml"
+      }
+    ]
+  ]
+}

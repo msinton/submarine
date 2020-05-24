@@ -19,10 +19,10 @@ export const update = (
   pipe(
     lookup(space, spaces),
     O.filter(isSingleTreasure),
-    O.map((collected) =>
+    O.map((holding) =>
       updateCurrentPlayer((player: Player) => ({
         ...player,
-        collectedTreasures: cons(collected, player.collectedTreasures),
+        holdingTreasures: cons(holding, player.holdingTreasures),
       }))({ players })
     ),
     O.map(
