@@ -1,13 +1,9 @@
 import { gameLoop, Action } from './game'
 import { logger } from './util/logger'
 import { newGame } from './init-game'
-import { Model, SingleTreasure, UIPlayer } from './model'
+import { Model } from './model'
 import { toUI } from './ui'
-import { reduce as fpReduce, foldMap } from 'fp-ts/lib/Array'
-import * as NEA from 'fp-ts/lib/ReadonlyNonEmptyArray'
-
-import { monoidSum } from 'fp-ts/lib/Monoid'
-import { pipe } from 'fp-ts/lib/pipeable'
+import { reduce as fpReduce } from 'fp-ts/lib/Array'
 
 const reduce = <A, B>(b: B, f: (b: B, a: A) => B, fa: A[]): B =>
   fpReduce<A, B>(b, f)(fa)
@@ -205,22 +201,4 @@ const result = sequence(
 
 // TODO
 // treasure penalty in model
-// player scores in model
 // check treasure penalty
-
-const totalScores = (
-  players: NEA.ReadonlyNonEmptyArray<UIPlayer>
-): NEA.ReadonlyNonEmptyArray<{
-  [key: string]: number
-}> =>
-  pipe(
-    players,
-    NEA.map((p: UIPlayer) => ({
-      [p.name]: pipe(
-        p.discoveredTreasures,
-        foldMap(monoidSum)((x: SingleTreasure) => x.value)
-      ),
-    }))
-  )
-
-logger.info('scores', totalScores(toUI(result).players))

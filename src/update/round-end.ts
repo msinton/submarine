@@ -1,26 +1,42 @@
 /* eslint-disable indent */
 import { pipe } from 'fp-ts/lib/pipeable'
-import { chain, map, reverse, filter, chunksOf, compact } from 'fp-ts/lib/Array'
+import {
+  chain,
+  map,
+  reverse,
+  filter,
+  chunksOf,
+  compact,
+  foldMap,
+} from 'fp-ts/lib/Array'
 import * as NEA from 'fp-ts/lib/ReadonlyNonEmptyArray'
-import * as O from 'fp-ts/lib/Option'
-import { Model, Player, Treasure, isTreasureStack, Space } from '../model'
-import { when, sortBy, mergeAll } from 'ramda'
+import {
+  Model,
+  Player,
+  Treasure,
+  isTreasureStack,
+  Space,
+  SingleTreasure,
+} from '../model'
+import { when, sortBy, mergeAll, concat } from 'ramda'
 import { initialSubmarine } from '../init-game'
+import { flow } from 'fp-ts/lib/function'
+import { monoidSum } from 'fp-ts/lib/Monoid'
 
 const totalRounds = 3
 
-const moveholdingTreasuresToDiscovered = (player: Player): Player => ({
+const moveHoldingTreasuresToDiscovered = (player: Player): Player => ({
   ...player,
   holdingTreasures: [],
   discoveredTreasures: pipe(
     chain((x: Treasure) => (isTreasureStack(x) ? [...x] : [x]))(
       player.holdingTreasures
     ),
-    (x) => x.concat(player.discoveredTreasures)
+    concat(player.discoveredTreasures)
   ),
 })
 
-const removeholdingTreasures = (player: Player): Player => ({
+const removeHoldingTreasures = (player: Player): Player => ({
   ...player,
   holdingTreasures: [],
 })
@@ -32,14 +48,24 @@ const isRoundEnd = ({
   submarine.oxygen <= 0 ||
   Object.values(round.positions).every((x) => x === 'returned')
 
+const updateScore = (player: Player): Player =>
+  pipe(
+    player.discoveredTreasures,
+    foldMap(monoidSum)((x: SingleTreasure) => x.value),
+    (score) => ({
+      ...player,
+      score,
+    })
+  )
+
 const updatePlayers = ({
   players,
   round,
 }: Pick<Model, 'players' | 'round'>): Pick<Model, 'players'> => ({
   players: NEA.map((player: Player) =>
     round.positions[player.name] === 'returned'
-      ? moveholdingTreasuresToDiscovered(player)
-      : removeholdingTreasures(player)
+      ? flow(moveHoldingTreasuresToDiscovered, updateScore)(player)
+      : removeHoldingTreasures(player)
   )(players),
 })
 
