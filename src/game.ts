@@ -25,30 +25,6 @@ type StartAction = 'roll' | 'return'
 type EndAction = 'pickup' | Replace | 'no-action'
 export type Action = StartAction | EndAction
 
-// TODO test
-// prettier-ignore
-export const rotateToNextPlayer = ({
-  players,
-  round,
-}: Pick<Model, 'players' | 'round'>): ReadonlyNonEmptyArray<Player> => {
-  const loop = (players: Array<Player>, attempts: number): Array<Player> =>
-    attempts === 0
-      ? players
-      : pipe(
-          players,
-          rotate(-1),
-          (xs) => round.positions[xs[0].name] === 'returned'
-              ? loop(xs, attempts - 1)
-              : xs
-        )
-
-  return pipe(
-    loop([...players.values()], players.length),
-    NEA.fromArray,
-    getOrElse(() => players)
-  )
-}
-
 export const containsPlayer = (
   targetSpace: number,
   positions: Array<Position>
@@ -98,19 +74,9 @@ const handleStartAction = (action: StartAction, game: Model): Model => {
         roll: update.roll,
       },
     },
-    when(() => returned, nextTurn)
+    when(() => returned, updates.nextTurn)
   )
 }
-
-export const nextTurn = (game: Model): Model => ({
-  ...game,
-  players: rotateToNextPlayer(game),
-  round: {
-    ...game.round,
-    phase: 'start',
-    roll: undefined,
-  },
-})
 
 export const updateCurrentPlayer = (f: (a: Player) => Player) => (
   game: Pick<Model, 'players'>
@@ -146,7 +112,7 @@ const handleEndAction = (action: EndAction, game: Model): Model => {
     position === 'returned'
       ? game
       : pipe(game, pickupUpdate(position), replaceUpdate(position)),
-    nextTurn
+    updates.nextTurn
   )
 }
 

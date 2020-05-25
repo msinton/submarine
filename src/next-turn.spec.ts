@@ -1,4 +1,4 @@
-import { rotateToNextPlayer } from './game'
+import { rotateToNextPlayer } from './update/next-turn'
 import * as NEA from 'fp-ts/lib/ReadonlyNonEmptyArray'
 import { Model, Player, Round } from './model'
 

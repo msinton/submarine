@@ -1,14 +1,13 @@
-import { gameLoop, nextTurn, Action } from './game'
+import { gameLoop, Action } from './game'
 import { logger } from './util/logger'
 import { newGame } from './init-game'
-import { Model, Player, Treasure, SingleTreasure, UIPlayer } from './model'
+import { Model, SingleTreasure, UIPlayer } from './model'
 import { toUI } from './ui'
-import { reduce as fpReduce, foldMap, map } from 'fp-ts/lib/Array'
+import { reduce as fpReduce, foldMap } from 'fp-ts/lib/Array'
 import * as NEA from 'fp-ts/lib/ReadonlyNonEmptyArray'
 
 import { monoidSum } from 'fp-ts/lib/Monoid'
 import { pipe } from 'fp-ts/lib/pipeable'
-import { flow } from 'fp-ts/lib/function'
 
 const reduce = <A, B>(b: B, f: (b: B, a: A) => B, fa: A[]): B =>
   fpReduce<A, B>(b, f)(fa)
@@ -205,7 +204,8 @@ const result = sequence(
 )
 
 // TODO
-// penalty in model
+// treasure penalty in model
+// player scores in model
 // check treasure penalty
 
 const totalScores = (
