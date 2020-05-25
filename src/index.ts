@@ -198,7 +198,3 @@ const result = sequence(
   ],
   newGame(['bob', 'sally', 'fred'])
 )
-
-// TODO
-// treasure penalty in model
-// check treasure penalty

@@ -43,7 +43,12 @@ export type ActivePosition = {
 
 export type Position = ActivePosition | 'returned'
 
-export type Roll = { die1: number; die2: number }
+export type Roll = {
+  die1: number
+  die2: number
+  penalty: number
+  total: number
+}
 
 export type TurnPhase = 'start' | 'end'
 

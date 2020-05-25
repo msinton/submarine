@@ -67,23 +67,13 @@ export const update = (
   { space, returning }: ActivePosition,
   game: Model
 ): { position: Position; roll: Roll } => {
-  const rolled = roll()
+  const dieRolls = roll()
   const penalty = currentPlayer(game).holdingTreasures.length || 0
-  const rollTotal = Math.max(0, rolled.die1 + rolled.die2 - penalty)
+  const total = Math.max(0, dieRolls.die1 + dieRolls.die2 - penalty)
   const directionMutliplier = returning ? -1 : 1
 
-  const target = Math.max(startIndex, space + rollTotal * directionMutliplier)
+  const target = Math.max(startIndex, space + total * directionMutliplier)
   const returned = returning && target === startIndex
-
-  // TODO remove
-  logger.info('roll stuff', {
-    space,
-    penalty,
-    rollTotal,
-    directionMutliplier,
-    target,
-    returned,
-  })
 
   const position = returned
     ? 'returned'
@@ -94,6 +84,6 @@ export const update = (
 
   return {
     position,
-    roll: rolled,
+    roll: { ...dieRolls, penalty, total },
   }
 }
