@@ -1,8 +1,5 @@
 import { pipe } from 'fp-ts/lib/pipeable'
-import { rotate } from 'fp-ts/lib/Array'
-import { ReadonlyNonEmptyArray } from 'fp-ts/lib/ReadonlyNonEmptyArray'
 import * as NEA from 'fp-ts/lib/ReadonlyNonEmptyArray'
-import { getOrElse } from 'fp-ts/lib/Option'
 import * as O from 'fp-ts/lib/Option'
 import {
   Model,
@@ -25,6 +22,14 @@ type StartAction = 'roll' | 'return'
 type EndAction = 'pickup' | Replace | 'no-action'
 export type Action = StartAction | EndAction
 
+const isStartAction = (arg: Action): arg is StartAction =>
+  arg === 'roll' || arg === 'return'
+
+const isEndAction = (arg: Action): arg is EndAction =>
+  arg === 'no-action' ||
+  arg === 'pickup' ||
+  Object.keys(arg) === ['holdingIndex']
+
 export const containsPlayer = (
   targetSpace: number,
   positions: Array<Position>
@@ -42,23 +47,22 @@ const depleteOxygen = (
 const handleStartAction = (action: StartAction, game: Model): Model => {
   const { round } = game
   const player = currentPlayer(game).name
-  const position = game.round.positions[player]!
+  const initialPosition = game.round.positions[player]!
 
-  if (position === 'returned') {
+  if (initialPosition === 'returned') {
     logger.error('Unexpected start action for returned player', {
       player,
       action,
     })
     return game
   }
-  const { space } = position
 
-  const update =
-    action === 'roll' || space === startIndex
-      ? updates.roll(position, game)
-      : updates.roll({ ...position, returning: true }, game)
+  const { roll, position } =
+    action === 'roll' || initialPosition.space === startIndex
+      ? updates.roll(initialPosition, game)
+      : updates.roll({ ...initialPosition, returning: true }, game)
 
-  const returned = update.position === 'returned'
+  const returned = position === 'returned'
 
   return pipe(
     {
@@ -69,9 +73,9 @@ const handleStartAction = (action: StartAction, game: Model): Model => {
         phase: 'end' as TurnPhase,
         positions: {
           ...game.round.positions,
-          [player]: update.position,
+          [player]: position,
         },
-        roll: update.roll,
+        roll,
       },
     },
     when(() => returned, updates.nextTurn)
@@ -115,14 +119,6 @@ const handleEndAction = (action: EndAction, game: Model): Model => {
     updates.nextTurn
   )
 }
-
-const isStartAction = (arg: Action): arg is StartAction =>
-  arg === 'roll' || arg === 'return'
-
-const isEndAction = (arg: Action): arg is EndAction =>
-  arg === 'no-action' ||
-  arg === 'pickup' ||
-  Object.keys(arg) === ['holdingIndex']
 
 export const currentPlayer = ({ players }: Pick<Model, 'players'>): Player =>
   NEA.head(players)
