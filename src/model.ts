@@ -29,12 +29,11 @@ export type Player = {
   name: string
   holdingTreasures: Array<Treasure>
   discoveredTreasures: Array<SingleTreasure>
+  score: number
 }
 
-export type UIPlayer = {
-  name: string
+export type UIPlayer = Player & {
   holdingTreasures: Array<HiddenTreasure>
-  discoveredTreasures: Array<SingleTreasure>
 }
 
 export type ActivePosition = {

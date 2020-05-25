@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="8" failures="0" time="2.518">
-  <testsuite name="rotateToNextPlayer" errors="0" failures="0" skipped="0" timestamp="2020-05-24T19:23:39" time="2.472" tests="8">
-    <testcase classname="rotateToNextPlayer when 2 players not returned, rotates to other player" name="rotateToNextPlayer when 2 players not returned, rotates to other player" time="0.002">
+<testsuites name="jest tests" tests="8" failures="0" time="2.25">
+  <testsuite name="rotateToNextPlayer" errors="0" failures="0" skipped="0" timestamp="2020-05-25T15:25:31" time="2.195" tests="8">
+    <testcase classname="rotateToNextPlayer when 2 players not returned, rotates to other player" name="rotateToNextPlayer when 2 players not returned, rotates to other player" time="0.003">
     </testcase>
-    <testcase classname="rotateToNextPlayer when 2 players current returned, rotates to next player" name="rotateToNextPlayer when 2 players current returned, rotates to next player" time="0.001">
+    <testcase classname="rotateToNextPlayer when 2 players current returned, rotates to next player" name="rotateToNextPlayer when 2 players current returned, rotates to next player" time="0">
     </testcase>
     <testcase classname="rotateToNextPlayer when 2 players other returned, stays on player" name="rotateToNextPlayer when 2 players other returned, stays on player" time="0">
     </testcase>

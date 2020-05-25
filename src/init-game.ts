@@ -42,6 +42,7 @@ export const initPlayer = (name: string): Player => ({
   name,
   holdingTreasures: [],
   discoveredTreasures: [],
+  score: 0,
 })
 
 export const initPositions = (

@@ -6,6 +6,7 @@ const bob: Player = {
   name: 'bob',
   discoveredTreasures: [],
   holdingTreasures: [],
+  score: 0,
 }
 const alice = {
   ...bob,
