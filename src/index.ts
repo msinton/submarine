@@ -23,7 +23,10 @@ const sequence = (actions: Array<Action>, game: Model): Model =>
     actions
   )
 
-const game = newGame(['bob', 'sally'])
+const game = newGame([
+  { id: 'bob', name: 'bob' },
+  { id: 'sally', name: 'salz' },
+])
 logger.info('server-side-game entity', game)
 logger.info('ui-model', toUI(game))
 
@@ -196,5 +199,9 @@ const result = sequence(
     'no-action',
     'return',
   ],
-  newGame(['bob', 'sally', 'fred'])
+  newGame([
+    { id: 'bob', name: 'B' },
+    { id: 'sally', name: 'S' },
+    { id: 'fred', name: 'F' },
+  ])
 )

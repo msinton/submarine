@@ -45,7 +45,7 @@ const depleteOxygen = (
 
 const handleStartAction = (action: StartAction, game: Model): Model => {
   const { round } = game
-  const player = currentPlayer(game).name
+  const player = currentPlayer(game).id
   const initialPosition = game.round.positions[player]!
 
   if (initialPosition === 'returned') {
@@ -89,7 +89,7 @@ export const updateCurrentPlayer = (f: (a: Player) => Player) => (
 
 const handleEndAction = (action: EndAction, game: Model): Model => {
   const player = NEA.head(game.players)
-  const position = game.round.positions[player.name]!
+  const position = game.round.positions[player.id]!
 
   const pickupUpdate = (position: ActivePosition): ((m: Model) => Model) =>
     when(
@@ -133,7 +133,7 @@ const handleAction = (action: Action) => (game: Model): Model => {
 }
 
 const warnInvalidState = (game: Model): void => {
-  const position = game.round.positions[currentPlayer(game).name]!
+  const position = game.round.positions[currentPlayer(game).id]!
   if (position === 'returned') {
     logger.error('should not have action for player returned')
   }
