@@ -68,7 +68,7 @@ const updatePlayers = ({
   round,
 }: Pick<Model, 'players' | 'round'>): Pick<Model, 'players'> => ({
   players: NEA.map((player: Player) =>
-    round.positions[player.name] === 'returned'
+    round.positions[player.id] === 'returned'
       ? flow(moveHoldingTreasuresToDiscovered, updateScore)(player)
       : removeHoldingTreasures(player)
   )(players),
@@ -93,7 +93,7 @@ const updateRound = ({
         ? round.positions // don't update when game ended
         : pipe(
             sortPlayersByFurthest({ round }),
-            map(([name]) => ({ [name]: { space: -1, returning: false } })),
+            map(([id]) => ({ [id]: { space: -1, returning: false } })),
             mergeAll
           ),
   },
@@ -140,10 +140,9 @@ const updateSpaces = ({
       ...xs,
       ...pipe(
         sortPlayersByFurthest({ round }),
-        filter(([name]) => round.positions[name] !== 'returned'),
+        filter(([id]) => round.positions[id] !== 'returned'),
         chain(
-          ([name]) =>
-            players.find((x) => x.name === name)?.holdingTreasures || []
+          ([id]) => players.find((x) => x.id === id)?.holdingTreasures || []
         ),
         stackTreasuresIncludingLast(head(lastSpace))
       ),

@@ -26,7 +26,7 @@ export type Space = Treasure | 'emptySpace'
 export type UISpace = HiddenTreasure | 'emptySpace'
 
 export type Player = {
-  name: string
+  id: string
   holdingTreasures: Array<Treasure>
   discoveredTreasures: Array<SingleTreasure>
   score: number

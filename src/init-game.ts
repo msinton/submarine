@@ -38,30 +38,30 @@ export const initModel: () => Omit<Model, 'players' | 'round'> = () => ({
   ended: false,
 })
 
-export const initPlayer = (name: string): Player => ({
-  name,
+export const initPlayer = (id: string): Player => ({
+  id,
   holdingTreasures: [],
   discoveredTreasures: [],
   score: 0,
 })
 
 export const initPositions = (
-  players: ReadonlyNonEmptyArray<string>
+  playerIds: ReadonlyNonEmptyArray<string>
 ): { [key: string]: Position } =>
   pipe(
-    players,
-    NEA.map((name: string) => ({
-      [name]: { space: startIndex, returning: false },
+    playerIds,
+    NEA.map((id: string) => ({
+      [id]: { space: startIndex, returning: false },
     })),
     mergeAll
   )
 
-export const newGame = (players: ReadonlyNonEmptyArray<string>): Model => ({
+export const newGame = (playerIds: ReadonlyNonEmptyArray<string>): Model => ({
   ...initModel(),
-  players: NEA.map(initPlayer)(players),
+  players: NEA.map(initPlayer)(playerIds),
   round: {
     number: 1,
     phase: 'start',
-    positions: initPositions(players),
+    positions: initPositions(playerIds),
   },
 })

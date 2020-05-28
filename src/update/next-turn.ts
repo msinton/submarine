@@ -16,7 +16,7 @@ export const rotateToNextPlayer = ({
       : pipe(
           players,
           rotate(-1),
-          (xs) => round.positions[xs[0].name] === 'returned'
+          (xs) => round.positions[xs[0].id] === 'returned'
               ? loop(xs, attempts - 1)
               : xs
         )

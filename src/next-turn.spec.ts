@@ -3,18 +3,18 @@ import * as NEA from 'fp-ts/lib/ReadonlyNonEmptyArray'
 import { Model, Player, Round } from './model'
 
 const bob: Player = {
-  name: 'bob',
+  id: 'bob',
   discoveredTreasures: [],
   holdingTreasures: [],
   score: 0,
 }
 const alice = {
   ...bob,
-  name: 'alice',
+  id: 'alice',
 }
 const frank = {
   ...bob,
-  name: 'frank',
+  id: 'frank',
 }
 const round: Round = {
   phase: 'start',
@@ -51,7 +51,7 @@ const threePlayerGame: Model = {
 const expectOrder = (
   order: string[],
   players: NEA.ReadonlyNonEmptyArray<Player>
-) => expect(players.map((x) => x.name)).toEqual(order)
+) => expect(players.map((x) => x.id)).toEqual(order)
 
 describe('rotateToNextPlayer', () => {
   test('when 2 players not returned, rotates to other player', () => {
