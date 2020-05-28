@@ -17,7 +17,6 @@ export type Replace = {
   holdingIndex: number
 }
 
-// TODO consider tidy up of action handlers - to include types
 type StartAction = 'roll' | 'return'
 type EndAction = 'pickup' | Replace | 'no-action'
 export type Action = StartAction | EndAction

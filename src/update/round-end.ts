@@ -8,6 +8,8 @@ import {
   chunksOf,
   compact,
   foldMap,
+  splitAt,
+  head,
 } from 'fp-ts/lib/Array'
 import * as NEA from 'fp-ts/lib/ReadonlyNonEmptyArray'
 import {
@@ -15,13 +17,16 @@ import {
   Player,
   Treasure,
   isTreasureStack,
-  Space,
   SingleTreasure,
+  Space,
+  TreasureStack,
 } from '../model'
 import { when, sortBy, mergeAll, concat } from 'ramda'
 import { initialSubmarine } from '../init-game'
 import { flow } from 'fp-ts/lib/function'
 import { monoidSum } from 'fp-ts/lib/Monoid'
+import { Option } from 'fp-ts/lib/Option'
+import * as O from 'fp-ts/lib/Option'
 
 const totalRounds = 3
 
@@ -94,13 +99,30 @@ const updateRound = ({
   },
 })
 
-const stackTreasures = (xs: Array<Treasure>): Array<Treasure> =>
+const stackTreasures = (xs: Array<Treasure>): Array<TreasureStack> =>
   pipe(
     xs,
     chain((x) => (isTreasureStack(x) ? [...x] : [x])),
     chunksOf(3),
     map((treasureChunks) => NEA.fromArray(treasureChunks)),
     compact
+  )
+
+export const stackTreasuresIncludingLast = (lastSpace: Option<Space>) => (
+  xs: Array<Treasure>
+): Array<Space> =>
+  pipe(
+    lastSpace,
+    O.filter(isTreasureStack),
+    O.fold(
+      () => ({ prepend: lastSpace, stacked: stackTreasures(xs) }),
+      (x) => ({ prepend: O.none, stacked: stackTreasures([...x, ...xs]) })
+    ),
+    ({ prepend, stacked }) =>
+      O.fold<Space, Array<Space>>(
+        () => stacked,
+        (x) => [x, ...stacked]
+      )(prepend)
   )
 
 // TODO consider fp Record - map values?
@@ -112,16 +134,18 @@ const updateSpaces = ({
 }: Pick<Model, 'spaces' | 'players' | 'round'>): Pick<Model, 'spaces'> =>
   pipe(
     spaces,
-    filter((x: Space) => x !== 'emptySpace'),
-    (xs) => [
+    filter((x) => x !== 'emptySpace'),
+    (xs) => splitAt(xs.length - 1)(xs),
+    ([xs, lastSpace]) => [
       ...xs,
       ...pipe(
         sortPlayersByFurthest({ round }),
         filter(([name]) => round.positions[name] !== 'returned'),
         chain(
-          ([name]) => players.find((x) => x.name === name)!.holdingTreasures
+          ([name]) =>
+            players.find((x) => x.name === name)?.holdingTreasures || []
         ),
-        stackTreasures
+        stackTreasuresIncludingLast(head(lastSpace))
       ),
     ],
     (spaces) => ({ spaces })
