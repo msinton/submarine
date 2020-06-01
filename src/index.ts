@@ -1,207 +1,72 @@
-import { gameLoop, Action } from './game'
+import fastify from 'fastify'
+import { Type } from '@sinclair/typebox'
+import { v4 as uuidv4 } from 'uuid'
+import { IncomingMessage, Server, ServerResponse } from 'http'
 import { logger } from './util/logger'
-import { newGame } from './init-game'
+import { PlayerData, newGame } from './init-game'
+import * as NEA from 'fp-ts/lib/ReadonlyNonEmptyArray'
+import * as O from 'fp-ts/lib/Option'
+import { pipe } from 'fp-ts/lib/pipeable'
 import { Model } from './model'
+import { tap } from 'ramda'
 import { toUI } from './ui'
-import { reduce as fpReduce } from 'fp-ts/lib/Array'
 
-const reduce = <A, B>(b: B, f: (b: B, a: A) => B, fa: A[]): B =>
-  fpReduce<A, B>(b, f)(fa)
+const app: fastify.FastifyInstance<
+  Server,
+  IncomingMessage,
+  ServerResponse
+> = fastify()
 
-const logRound = (msg: string, { round, players }: Model) =>
-  logger.info(msg, { round, players })
+const waitingRoom: Array<PlayerData> = []
 
-// example game
-
-const sequence = (actions: Array<Action>, game: Model): Model =>
-  reduce(
-    game,
-    (game, action) => {
-      logger.info('game, next action', { action, game })
-      return gameLoop(action, game)
+app.post(
+  '/new-player',
+  {
+    schema: {
+      body: Type.Object({ name: Type.String() }),
     },
-    actions
-  )
-
-const game = newGame([
-  { id: 'bob', name: 'bob' },
-  { id: 'sally', name: 'salz' },
-])
-logger.info('server-side-game entity', game)
-logger.info('ui-model', toUI(game))
-
-const next1 = gameLoop('roll', game)
-logger.info('next1', next1)
-// logger.info('next1-return', gameLoop('return', game)) // goes forward (can't return on first move)
-
-const next2 = gameLoop('no-action', next1)
-logRound('next2', next2)
-
-const next3 = gameLoop('roll', next2)
-logRound('next3', next3)
-
-const next4 = gameLoop('pickup', next3)
-logRound('next4', next4)
-
-const next5 = gameLoop('no-action', next4) // false move, should be ignored
-logRound('next5', next5)
-
-const next6 = gameLoop('return', next5)
-logRound('next6', next6)
-
-const next7 = gameLoop('pickup', next6)
-logRound('next7', next7)
-
-const next8 = gameLoop('return', next7)
-logRound('next8', next8)
-
-const next9 = gameLoop({ holdingIndex: 0 }, next8)
-logRound('next9', next9)
-
-const next10 = gameLoop('roll', next9)
-logRound('next10', next10)
-
-logger.info('ui-model', toUI(next10))
-
-logger.info('---------------------------------------------------------------')
-
-const result = sequence(
-  [
-    'roll',
-    'no-action',
-    'roll',
-    'no-action',
-    'roll',
-    'no-action',
-    'roll',
-    'no-action',
-    'roll',
-    'pickup',
-    'return',
-    'pickup',
-    'roll',
-    'no-action',
-    'roll',
-    'no-action',
-    'roll',
-    'pickup',
-    'return',
-    'pickup',
-    'return',
-    'no-action',
-    'roll',
-    'pickup',
-    'roll',
-    'pickup',
-    'roll',
-    'pickup',
-    'roll',
-    'pickup',
-    'roll',
-    'pickup',
-    'roll',
-    'pickup',
-    'roll',
-    'pickup',
-    'roll',
-    'pickup',
-    'roll',
-    'pickup',
-    'return',
-    'pickup',
-    'roll',
-    'no-action',
-    'roll',
-    'no-action',
-    'roll',
-    'no-action',
-    'roll',
-    'no-action',
-    'roll',
-    'pickup',
-    'roll',
-    'pickup',
-    'roll',
-    'pickup',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'roll',
-    'no-action',
-    'roll',
-    'pickup',
-    'roll',
-    'no-action',
-    'roll',
-    'no-action',
-    'roll',
-    'pickup',
-    'roll',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-    'no-action',
-    'return',
-  ],
-  newGame([
-    { id: 'bob', name: 'B' },
-    { id: 'sally', name: 'S' },
-    { id: 'fred', name: 'F' },
-  ])
+  },
+  async (request) => {
+    const id = uuidv4()
+    if (waitingRoom.length < 6) {
+      waitingRoom.push({ id, name: request.body.name })
+    } else {
+      logger.error('Not handled, too many players...')
+    }
+    return { id }
+  }
 )
+
+let currentGame: Model | undefined = undefined
+
+app.post(
+  '/start',
+  {
+    schema: {
+      body: Type.Object({ id: Type.String() }),
+    },
+  },
+  async (request) =>
+    pipe(
+      waitingRoom,
+      O.fromPredicate((room) => room.some(({ id }) => id === request.body.id)),
+      O.chain(() => NEA.fromArray(waitingRoom)),
+      O.map(newGame),
+      O.map(tap((x) => (currentGame = x))),
+      O.map(toUI),
+      O.map((x) => Promise.resolve(x)),
+      O.getOrElse(() => Promise.reject(new Error('Not ready')))
+    )
+)
+
+const port = 3000
+const start = async () => {
+  try {
+    await app.listen(port)
+    logger.info(`server listening on ${port}`)
+  } catch (err) {
+    logger.error(err)
+    process.exit(1)
+  }
+}
+start()

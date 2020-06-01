@@ -57,7 +57,7 @@ export const initPositions = (
     mergeAll
   )
 
-type PlayerData = {
+export type PlayerData = {
   id: string
   name: string
 }
