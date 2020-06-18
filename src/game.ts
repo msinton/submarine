@@ -11,7 +11,7 @@ import {
 } from './model'
 import updates from './update'
 import { logger } from './util/logger'
-import { mergeRight, when, tap } from 'ramda'
+import { mergeRight, when, tap, equals } from 'ramda'
 
 export type Replace = {
   holdingIndex: number
@@ -27,7 +27,7 @@ const isStartAction = (arg: Action): arg is StartAction =>
 const isEndAction = (arg: Action): arg is EndAction =>
   arg === 'no-action' ||
   arg === 'pickup' ||
-  Object.keys(arg) === ['holdingIndex']
+  equals(Object.keys(arg), ['holdingIndex'])
 
 export const containsPlayer = (
   targetSpace: number,

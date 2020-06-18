@@ -58,7 +58,6 @@ const nextSpace = (
     ? nextBackwardSpace(target, Object.values(model.round.positions))
     : pipe(
         maxAvailableSpace(currentSpace, model),
-        m => { logger.info('max', { m }); return m },
         (maxSpace) => nextForwardSpace({ maxSpace, target, positions: Object.values(model.round.positions) })
       )
     }

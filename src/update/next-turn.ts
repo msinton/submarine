@@ -34,6 +34,6 @@ export const update = (game: Model): Model => ({
   round: {
     ...game.round,
     phase: 'start',
-    roll: undefined,
+    roll: game.round.roll,
   },
 })
