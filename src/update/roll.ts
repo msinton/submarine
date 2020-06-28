@@ -7,7 +7,7 @@ import { Model, ActivePosition, Roll, Position, startIndex } from '../model'
 import { randomInt } from '../util/utils'
 import { containsPlayer, currentPlayer } from '../game'
 
-const roll = () => ({ die1: randomInt(3), die2: randomInt(3) })
+const roll = () => ({ die1: randomInt(2) + 1, die2: randomInt(2) + 1 })
 
 const maxAvailableSpace = (currentSpace: number, { spaces, round }: Model) =>
   pipe(

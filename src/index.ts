@@ -24,6 +24,11 @@ const app: fastify.FastifyInstance<
 
 const waitingRoom: Array<PlayerData> = []
 
+app.setErrorHandler((err) => {
+  logger.error('Error', { err })
+  return Promise.reject(err)
+})
+
 app.post(
   '/new-player',
   {
@@ -36,7 +41,7 @@ app.post(
     if (waitingRoom.length < 6) {
       waitingRoom.push({ id, name: request.body.name })
     } else {
-      logger.error('Not handled, too many players...')
+      logger.error('Not handled, too many players!')
     }
     return { id }
   }
@@ -121,7 +126,7 @@ app.post(
     )
 )
 
-const port = 3000
+const port = 3001
 const start = () =>
   Promise.resolve()
     .then(() => app.listen(port))
