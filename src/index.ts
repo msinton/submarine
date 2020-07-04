@@ -1,13 +1,13 @@
 import fastify from 'fastify'
 import { Type } from '@sinclair/typebox'
-import { v4 as uuidv4 } from 'uuid'
+import { v4 as uuid } from 'uuid'
 import { IncomingMessage, Server, ServerResponse } from 'http'
 import { logger } from './util/logger'
-import { PlayerData, newGame } from './init-game'
+import { PlayerData } from './init-game'
 import * as NEA from 'fp-ts/lib/ReadonlyNonEmptyArray'
 import { eqString } from 'fp-ts/lib/Eq'
 import { lookup } from 'fp-ts/lib/Map'
-import * as Map from 'fp-ts/lib/Map'
+import * as MAP from 'fp-ts/lib/Map'
 import * as O from 'fp-ts/lib/Option'
 import { Option } from 'fp-ts/lib/Option'
 import { pipe } from 'fp-ts/lib/pipeable'
@@ -15,6 +15,10 @@ import { Model } from './model'
 import { tap } from 'ramda'
 import { toUI } from './ui'
 import { gameLoop } from './game'
+import { ordString } from 'fp-ts/lib/Ord'
+import { head } from 'fp-ts/lib/Array'
+import { resolve, reject } from './util/utils'
+import { attach as attachStartRoute } from './route/start'
 
 const app: fastify.FastifyInstance<
   Server,
@@ -22,12 +26,36 @@ const app: fastify.FastifyInstance<
   ServerResponse
 > = fastify()
 
-const waitingRoom: Array<PlayerData> = []
+const waitingRooms: Map<string, Array<PlayerData>> = new Map()
+const games: Map<string, Model> = new Map()
 
 app.setErrorHandler((err) => {
   logger.error('Error', { err })
-  return Promise.reject(err)
+  return reject(err)
 })
+
+export type WaitingRoom = Array<PlayerData>
+
+const newWaitingRoom: () => [string, WaitingRoom] = () => {
+  const key = uuid()
+  const newRoom: WaitingRoom = []
+  waitingRooms.set(key, newRoom)
+  return [key, newRoom]
+}
+
+const getUnfilledWaitingRoom: () => [string, WaitingRoom] = () =>
+  pipe(
+    waitingRooms,
+    MAP.filter<WaitingRoom>((x) => x.length < 6),
+    MAP.toArray(ordString),
+    head,
+    O.getOrElse(newWaitingRoom)
+  )
+
+const roomPlayers = (room: WaitingRoom) => room.map(({ name }) => ({ name }))
+
+const joinRoom = (player: PlayerData) => (room: WaitingRoom) =>
+  room.push(player)
 
 app.post(
   '/new-player',
@@ -36,38 +64,47 @@ app.post(
       body: Type.Object({ name: Type.String() }),
     },
   },
-  async (request) => {
-    const id = uuidv4()
-    if (waitingRoom.length < 6) {
-      waitingRoom.push({ id, name: request.body.name })
-    } else {
-      logger.error('Not handled, too many players!')
-    }
-    return { id }
+  async ({ body: { name } }) =>
+    pipe(
+      getUnfilledWaitingRoom(),
+      ([roomId, room]) => ({ id: uuid(), roomId, room }),
+      tap(({ id, room }) => joinRoom({ id, name })(room)),
+      (result) => ({ ...result, room: roomPlayers(result.room) })
+    )
+)
+
+app.post(
+  '/join',
+  {
+    schema: {
+      body: Type.Object({ roomId: Type.String(), name: Type.String() }),
+    },
+  },
+  async ({ body: { roomId, name } }) => {
+    const id = uuid()
+    return pipe(
+      MAP.lookup(eqString)(roomId, waitingRooms),
+      O.map(tap(joinRoom({ id, name }))),
+      O.map((room) => ({ id, roomId, room: roomPlayers(room) })),
+      O.map(resolve),
+      O.getOrElse(() => reject(new Error('Not joinable')))
+    )
   }
 )
 
-const games: Map<string, Model> = Map.empty
-
-// TODO waitingRooms plural
-app.post(
-  '/start',
+app.get(
+  '/room',
   {
     schema: {
-      body: Type.Object({ id: Type.String() }),
+      querystring: { roomId: Type.String() },
     },
   },
-  async (request) =>
+  async ({ query: { roomId } }) =>
     pipe(
-      waitingRoom,
-      O.fromPredicate((room) => room.some(({ id }) => id === request.body.id)),
-      O.chain(() => NEA.fromArray(waitingRoom)),
-      O.map(newGame),
-      O.map((game) => ({ gameId: uuidv4(), game })),
-      O.map(tap(({ gameId, game }) => games.set(gameId, game))),
-      O.map((x) => ({ ...x, game: toUI(x.game) })),
-      O.map((x) => Promise.resolve(x)),
-      O.getOrElse(() => Promise.reject(new Error('Not ready')))
+      MAP.lookup(eqString)(roomId, waitingRooms),
+      O.map((room) => ({ room: roomPlayers(room) })),
+      O.map(resolve),
+      O.getOrElse(() => reject(new Error('Not found')))
     )
 )
 
@@ -104,8 +141,9 @@ app.post(
       O.chain(validateIsPlayersTurn(id)),
       O.map((game) => gameLoop(action, game)),
       O.map(tap((game) => games.set(gameId, game))),
-      O.map((x) => Promise.resolve(toUI(x))),
-      O.getOrElse(() => Promise.reject(new Error('Bad gameId or player id')))
+      O.map(toUI),
+      O.map(resolve),
+      O.getOrElse(() => reject(new Error('Bad gameId or player id')))
     )
 )
 
@@ -121,10 +159,22 @@ app.post(
   async ({ body: { gameId } }) =>
     pipe(
       lookup(eqString)(gameId, games),
-      O.map((x) => Promise.resolve(toUI(x))),
-      O.getOrElse(() => Promise.reject(new Error('Bad gameId')))
+      O.map(toUI),
+      O.map(resolve),
+      O.getOrElse(() => reject(new Error('Bad gameId')))
     )
 )
+
+// TODO remove, using in development
+app.post('/reset', {}, async () =>
+  pipe(
+    games.clear(),
+    () => waitingRooms.clear(),
+    () => 'ok'
+  )
+)
+
+attachStartRoute(app, waitingRooms, games)
 
 const port = 3001
 const start = () =>

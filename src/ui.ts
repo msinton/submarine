@@ -32,9 +32,12 @@ const hideTreasureInSpace = (space: Space): UISpace =>
 
 const uiPlayer = (player: Player): UIPlayer => ({
   ...player,
+  // id: `${player.name}-${player.id.substring(0, 10)}`,
   holdingTreasures: map(hideTreasure)(player.holdingTreasures),
 })
 
+// TODO obfuscate player ID - and in positions, one-way-hash?
+// but maintain ID for the player we are returning this to
 export const toUI = (model: Model): UIModel => ({
   ...model,
   spaces: map(hideTreasureInSpace)(model.spaces),
