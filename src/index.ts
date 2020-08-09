@@ -26,7 +26,7 @@ const app: fastify.FastifyInstance<
   ServerResponse
 > = fastify()
 
-const waitingRooms: Map<string, Array<PlayerData>> = new Map()
+const waitingRooms: Map<string, WaitingRoom> = new Map()
 const games: Map<string, Model> = new Map()
 
 app.setErrorHandler((err) => {
@@ -34,11 +34,14 @@ app.setErrorHandler((err) => {
   return reject(err)
 })
 
-export type WaitingRoom = Array<PlayerData>
+export type WaitingRoom = {
+  players: Array<PlayerData>
+  gameId?: string
+}
 
 const newWaitingRoom: () => [string, WaitingRoom] = () => {
   const key = uuid()
-  const newRoom: WaitingRoom = []
+  const newRoom: WaitingRoom = { players: [] }
   waitingRooms.set(key, newRoom)
   return [key, newRoom]
 }
@@ -46,16 +49,17 @@ const newWaitingRoom: () => [string, WaitingRoom] = () => {
 const getUnfilledWaitingRoom: () => [string, WaitingRoom] = () =>
   pipe(
     waitingRooms,
-    MAP.filter<WaitingRoom>((x) => x.length < 6),
+    MAP.filter<WaitingRoom>((x) => x.players.length < 6),
     MAP.toArray(ordString),
     head,
     O.getOrElse(newWaitingRoom)
   )
 
-const roomPlayers = (room: WaitingRoom) => room.map(({ name }) => ({ name }))
+const roomPlayers = (room: WaitingRoom) =>
+  room.players.map(({ name }) => ({ name }))
 
 const joinRoom = (player: PlayerData) => (room: WaitingRoom) =>
-  room.push(player)
+  room.players.push(player)
 
 app.post(
   '/new-player',
@@ -102,7 +106,7 @@ app.get(
   async ({ query: { roomId } }) =>
     pipe(
       MAP.lookup(eqString)(roomId, waitingRooms),
-      O.map((room) => ({ room: roomPlayers(room) })),
+      O.map((room) => ({ room: roomPlayers(room), gameId: room.gameId })),
       O.map(resolve),
       O.getOrElse(() => reject(new Error('Not found')))
     )
