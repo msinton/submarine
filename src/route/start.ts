@@ -54,7 +54,7 @@ const removePlayerFromRoom = (exitingPlayerId: string) => (
     ...room,
     players: pipe(
       room.players,
-      filter((x) => x.id === exitingPlayerId)
+      filter((x) => x.id !== exitingPlayerId)
     ),
   }))
 

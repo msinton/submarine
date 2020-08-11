@@ -100,12 +100,12 @@ app.get(
   '/room',
   {
     schema: {
-      querystring: { roomId: Type.String() },
+      querystring: { id: Type.String() },
     },
   },
-  async ({ query: { roomId } }) =>
+  async ({ query: { id } }) =>
     pipe(
-      MAP.lookup(eqString)(roomId, waitingRooms),
+      MAP.lookup(eqString)(id, waitingRooms),
       O.map((room) => ({ room: roomPlayers(room), gameId: room.gameId })),
       O.map(resolve),
       O.getOrElse(() => reject(new Error('Not found')))
@@ -151,18 +151,18 @@ app.post(
     )
 )
 
-app.post(
+app.get(
   '/game',
   {
     schema: {
-      body: Type.Object({
-        gameId: Type.String(),
-      }),
+      querystring: {
+        id: Type.String(),
+      },
     },
   },
-  async ({ body: { gameId } }) =>
+  async ({ query: { id } }) =>
     pipe(
-      lookup(eqString)(gameId, games),
+      lookup(eqString)(id, games),
       O.map(toUI),
       O.map(resolve),
       O.getOrElse(() => reject(new Error('Bad gameId')))
@@ -176,6 +176,17 @@ app.post('/reset', {}, async () =>
     () => waitingRooms.clear(),
     () => 'ok'
   )
+)
+setInterval(
+  () =>
+    logger.info('rooms and games', {
+      rooms: MAP.toArray(ordString)(waitingRooms),
+      games: MAP.toArray(ordString)(games).map(([id, { players }]) => ({
+        id,
+        players,
+      })),
+    }),
+  10 * 1000
 )
 
 attachStartRoute(app, waitingRooms, games)
