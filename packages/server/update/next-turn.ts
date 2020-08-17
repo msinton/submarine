@@ -3,7 +3,7 @@ import { rotate } from 'fp-ts/lib/Array'
 import { ReadonlyNonEmptyArray } from 'fp-ts/lib/ReadonlyNonEmptyArray'
 import * as NEA from 'fp-ts/lib/ReadonlyNonEmptyArray'
 import { getOrElse } from 'fp-ts/lib/Option'
-import { Model, Player } from '../model'
+import { Model, Player } from '../../model'
 
 // prettier-ignore
 export const rotateToNextPlayer = ({

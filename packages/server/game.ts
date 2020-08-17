@@ -8,7 +8,7 @@ import {
   startIndex,
   TurnPhase,
   ActivePosition,
-} from './model'
+} from '../model'
 import updates from './update'
 import { logger } from './util/logger'
 import { mergeRight, when, tap, equals } from 'ramda'

@@ -20,7 +20,7 @@ import {
   SingleTreasure,
   Space,
   TreasureStack,
-} from '../model'
+} from '../../model'
 import { when, sortBy, mergeAll, concat } from 'ramda'
 import { initialSubmarine } from '../init-game'
 import { flow } from 'fp-ts/lib/function'

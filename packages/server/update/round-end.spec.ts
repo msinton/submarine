@@ -1,6 +1,6 @@
 import * as O from 'fp-ts/lib/Option'
 import * as NEA from 'fp-ts/lib/ReadonlyNonEmptyArray'
-import { Treasure, TreasureStack } from '../model'
+import { Treasure, TreasureStack } from '../../model'
 import { stackTreasuresIncludingLast } from './round-end'
 
 describe('stackTreasures', () => {

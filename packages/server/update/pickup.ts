@@ -8,7 +8,7 @@ import {
   Player,
   ActivePosition,
   isSingleTreasure,
-} from '../model'
+} from '../../model'
 import { updateCurrentPlayer } from '../game'
 import { mergeRight } from 'ramda'
 

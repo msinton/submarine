@@ -3,7 +3,7 @@ import { pipe } from 'fp-ts/lib/pipeable'
 import { findLast } from 'fp-ts/lib/Array'
 import { logger } from '../util/logger'
 import { getOrElse } from 'fp-ts/lib/Option'
-import { Model, ActivePosition, Roll, Position, startIndex } from '../model'
+import { Model, ActivePosition, Roll, Position, startIndex } from '../../model'
 import { randomInt } from '../util/utils'
 import { containsPlayer, currentPlayer } from '../game'
 

@@ -1,7 +1,7 @@
 import { gameLoop, Action } from './game'
 import { logger } from './util/logger'
 import { newGame } from './init-game'
-import { Model } from './model'
+import { Model } from '../model'
 import { toUI } from './ui'
 import { reduce as fpReduce } from 'fp-ts/lib/Array'
 
@@ -65,7 +65,7 @@ logger.info('ui-model', toUI(next10))
 
 logger.info('---------------------------------------------------------------')
 
-const result = sequence(
+sequence(
   [
     'roll',
     'no-action',

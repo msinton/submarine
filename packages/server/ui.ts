@@ -13,7 +13,7 @@ import {
   HiddenSingleTreasure,
   isSingleTreasure,
   isTreasureStack,
-} from './model'
+} from '../model/index'
 
 const hideSingleTreasure = ({
   level,

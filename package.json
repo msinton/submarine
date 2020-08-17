@@ -4,8 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "tsc && node dist/index.js",
-    "start-dev": "npx ts-node-dev --no-notify --type-check ./src/index.ts",
+    "build": "tsc -b",
+    "clean": "tsc -b --clean",
+    "start": "node lib/server/index.js",
+    "start-dev": "npx ts-node-dev --no-notify --type-check ./packages/server/index.ts",
     "test:unit": "jest -c jest.conf.unit.json",
     "lint": "npx eslint ./src/**/*.ts"
   },

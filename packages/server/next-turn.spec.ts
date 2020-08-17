@@ -1,9 +1,10 @@
 import { rotateToNextPlayer } from './update/next-turn'
 import * as NEA from 'fp-ts/lib/ReadonlyNonEmptyArray'
-import { Model, Player, Round } from './model'
+import { Model, Player, Round } from '../model'
 
 const bob: Player = {
   id: 'bob',
+  name: 'bob',
   discoveredTreasures: [],
   holdingTreasures: [],
   score: 0,
@@ -11,10 +12,12 @@ const bob: Player = {
 const alice = {
   ...bob,
   id: 'alice',
+  name: 'alice',
 }
 const frank = {
   ...bob,
   id: 'frank',
+  name: 'frank',
 }
 const round: Round = {
   phase: 'start',

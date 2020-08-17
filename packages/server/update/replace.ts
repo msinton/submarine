@@ -3,7 +3,7 @@ import { pipe } from 'fp-ts/lib/pipeable'
 import { deleteAt, lookup, updateAt } from 'fp-ts/lib/Array'
 import * as O from 'fp-ts/lib/Option'
 import { Option, getOrElse } from 'fp-ts/lib/Option'
-import { Model, Player, Space, ActivePosition } from '../model'
+import { Model, Player, Space, ActivePosition } from '../../model'
 import { Replace, updateCurrentPlayer } from '../game'
 
 const removeTreasure = (holdingIndex: number, player: Player): Player => ({
