@@ -12,6 +12,7 @@ import {
   head,
 } from 'fp-ts/lib/Array'
 import * as NEA from 'fp-ts/lib/ReadonlyNonEmptyArray'
+import * as R from 'fp-ts/lib/Record'
 import {
   Model,
   Player,
@@ -99,6 +100,23 @@ const updateRound = ({
   },
 })
 
+const updateRoundEndSummary = ({
+  round,
+  players,
+}: Pick<Model, 'round' | 'players'>): Pick<Model, 'roundEndSummary'> => ({
+  roundEndSummary: pipe(
+    round.positions,
+    R.mapWithIndex((id, x) => ({
+      position: x,
+      discovered:
+        x === 'returned'
+          ? players.find((x) => x.id === id)?.holdingTreasures || []
+          : [],
+    })),
+    (players) => ({ players, number: round.number })
+  ),
+})
+
 const stackTreasures = (xs: Array<Treasure>): Array<TreasureStack> =>
   pipe(
     xs,
@@ -161,6 +179,7 @@ export const update = (game: Model): Model =>
       ...initialSubmarine,
       ...updatePlayers(game),
       ...updateRound(game),
+      ...updateRoundEndSummary(game),
       ...updateSpaces(game),
       ...updateGameEnded(game),
     }),

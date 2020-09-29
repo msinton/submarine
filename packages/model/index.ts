@@ -60,8 +60,18 @@ export type TurnPhase = 'start' | 'end'
 export type Round = {
   phase: TurnPhase
   number: number
-  positions: { [key: string]: Position } // TODO players: {position, treasures}
+  positions: { [playerId: string]: Position } // TODO players: {position, treasures}
   roll?: Roll
+}
+
+export type RoundEndSummary = {
+  players: {
+    [playerId: string]: {
+      discovered: Array<Treasure>
+      position: Position
+    }
+  }
+  number: number
 }
 
 export type Model = {
@@ -69,6 +79,7 @@ export type Model = {
   submarine: Submarine
   spaces: Array<Space>
   round: Round
+  roundEndSummary?: RoundEndSummary
   ended: boolean
 }
 

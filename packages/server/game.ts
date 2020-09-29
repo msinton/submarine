@@ -133,7 +133,7 @@ const handleAction = (action: Action) => (game: Model): Model => {
 }
 
 const warnInvalidState = (game: Model): void => {
-  const position = game.round.positions[currentPlayer(game).id]!
+  const position = game.round.positions[currentPlayer(game).id]
   if (position === 'returned') {
     logger.error('should not have action for player returned')
   }
