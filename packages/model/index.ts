@@ -94,4 +94,7 @@ export const isSingleTreasure = (arg: Space): arg is SingleTreasure =>
 export const isTreasureStack = (arg: Space): arg is TreasureStack =>
   Array.isArray(arg)
 
+export const isTreasure = (arg: Space): arg is Treasure =>
+  isSingleTreasure(arg) || isTreasureStack(arg)
+
 export const startIndex = -1
