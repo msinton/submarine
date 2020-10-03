@@ -27,10 +27,7 @@ const nextForwardSpace = ({
   target > maxSpace
     ? maxSpace
     : containsPlayer(target, positions)
-      ? pipe(
-          logger.info('nextForwardSpace - does contain player', { target }),
-          () => nextForwardSpace({ maxSpace, target: target + 1, positions })
-        )
+      ? nextForwardSpace({ maxSpace, target: target + 1, positions })
       : target
 
 // prettier-ignore
@@ -63,7 +60,7 @@ const nextSpace = (
     }
 
 export const update = (
-  { space, returning }: ActivePosition,
+  { space: currentSpace, returning }: ActivePosition,
   game: Model
 ): { position: Position; roll: Roll } => {
   const dieRolls = roll()
@@ -71,18 +68,15 @@ export const update = (
   const total = Math.max(0, dieRolls.die1 + dieRolls.die2 - penalty)
   const directionMutliplier = returning ? -1 : 1
 
-  const target = Math.max(startIndex, space + total * directionMutliplier)
-  const returned = returning && target === startIndex
-
-  const position = returned
-    ? 'returned'
-    : {
-        returning,
-        space: nextSpace(space, target, returning, game),
-      }
+  const target = Math.max(
+    startIndex,
+    currentSpace + total * directionMutliplier
+  )
+  const space = nextSpace(currentSpace, target, returning, game)
+  const returned = returning && space <= startIndex
 
   return {
-    position,
+    position: returned ? 'returned' : { returning, space },
     roll: { ...dieRolls, penalty, total },
   }
 }
