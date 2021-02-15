@@ -3,7 +3,7 @@ import { rotate } from 'fp-ts/lib/Array'
 import { ReadonlyNonEmptyArray } from 'fp-ts/lib/ReadonlyNonEmptyArray'
 import * as NEA from 'fp-ts/lib/ReadonlyNonEmptyArray'
 import { getOrElse } from 'fp-ts/lib/Option'
-import { Model, Player } from '../../model'
+import { isReturned, Model, Player } from '../../model'
 
 // prettier-ignore
 export const rotateToNextPlayer = ({
@@ -16,7 +16,7 @@ export const rotateToNextPlayer = ({
       : pipe(
           players,
           rotate(-1),
-          (xs) => round.positions[xs[0].id] === 'returned'
+          (xs) => isReturned(round.positions[xs[0].id])
               ? loop(xs, attempts - 1)
               : xs
         )

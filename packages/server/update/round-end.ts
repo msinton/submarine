@@ -1,15 +1,14 @@
-/* eslint-disable indent */
 import { pipe } from 'fp-ts/lib/pipeable'
 import {
   chain,
   map,
-  reverse,
   filter,
   chunksOf,
   compact,
   foldMap,
   splitAt,
   head,
+  sort,
 } from 'fp-ts/lib/Array'
 import * as NEA from 'fp-ts/lib/ReadonlyNonEmptyArray'
 import * as R from 'fp-ts/lib/Record'
@@ -21,8 +20,12 @@ import {
   SingleTreasure,
   Space,
   TreasureStack,
+  isReturned,
+  startPosition,
+  ordPositionByFurthestThenLastReturned,
+  ordByOrderingAndIgnoreKey,
 } from '../../model'
-import { when, sortBy, mergeAll, concat } from 'ramda'
+import { when, mergeAll, concat } from 'ramda'
 import { initialSubmarine } from '../init-game'
 import { flow } from 'fp-ts/lib/function'
 import { monoidSum } from 'fp-ts/lib/Monoid'
@@ -51,8 +54,7 @@ const isRoundEnd = ({
   submarine,
   round,
 }: Pick<Model, 'submarine' | 'round'>): boolean =>
-  submarine.oxygen <= 0 ||
-  Object.values(round.positions).every((x) => x === 'returned')
+  submarine.oxygen <= 0 || Object.values(round.positions).every(isReturned)
 
 const updateScore = (player: Player): Player =>
   pipe(
@@ -69,17 +71,17 @@ const updatePlayers = ({
   round,
 }: Pick<Model, 'players' | 'round'>): Pick<Model, 'players'> => ({
   players: NEA.map((player: Player) =>
-    round.positions[player.id] === 'returned'
+    isReturned(round.positions[player.id])
       ? flow(moveHoldingTreasuresToDiscovered, updateScore)(player)
       : removeHoldingTreasures(player)
   )(players),
 })
 
-const sortPlayersByFurthest = ({ round }: Pick<Model, 'round'>) =>
+export const sortPlayersByFurthest = (positions: Model['round']['positions']) =>
   pipe(
-    Object.entries(round.positions),
-    sortBy(([, position]) => (position === 'returned' ? -1 : position.space)),
-    reverse
+    positions,
+    R.toArray,
+    sort(ordByOrderingAndIgnoreKey(ordPositionByFurthestThenLastReturned))
   )
 
 const updateRound = ({
@@ -93,8 +95,8 @@ const updateRound = ({
       round.number === totalRounds
         ? round.positions // don't update when game ended
         : pipe(
-            sortPlayersByFurthest({ round }),
-            map(([id]) => ({ [id]: { space: -1, returning: false } })),
+            sortPlayersByFurthest(round.positions),
+            map(([id]) => ({ [id]: startPosition })),
             mergeAll
           ),
   },
@@ -108,10 +110,9 @@ const updateRoundEndSummary = ({
     round.positions,
     R.mapWithIndex((id, x) => ({
       position: x,
-      discovered:
-        x === 'returned'
-          ? players.find((x) => x.id === id)?.holdingTreasures || []
-          : [],
+      discovered: isReturned(x)
+        ? players.find((x) => x.id === id)?.holdingTreasures || []
+        : [],
     })),
     (players) => ({ players, number: round.number })
   ),
@@ -143,8 +144,7 @@ export const stackTreasuresIncludingLast = (lastSpace: Option<Space>) => (
       )(prepend)
   )
 
-// TODO consider fp Record - map values?
-// TODO the last already present stack should be added to
+// TODO consider fp Record - map or positions as array?
 const updateSpaces = ({
   spaces,
   round,
@@ -157,8 +157,8 @@ const updateSpaces = ({
     ([xs, lastSpace]) => [
       ...xs,
       ...pipe(
-        sortPlayersByFurthest({ round }),
-        filter(([id]) => round.positions[id] !== 'returned'),
+        sortPlayersByFurthest(round.positions),
+        filter(([id]) => !isReturned(round.positions[id])),
         chain(
           ([id]) => players.find((x) => x.id === id)?.holdingTreasures || []
         ),

@@ -2,7 +2,13 @@
 import { pipe } from 'fp-ts/lib/pipeable'
 import { map, chain } from 'fp-ts/lib/Array'
 import shuffle from './util/shuffle'
-import { SingleTreasure, Model, Player, startIndex, Position } from '../model'
+import {
+  SingleTreasure,
+  Model,
+  Player,
+  Position,
+  startPosition,
+} from '../model'
 import { ReadonlyNonEmptyArray } from 'fp-ts/lib/ReadonlyNonEmptyArray'
 import * as NEA from 'fp-ts/lib/ReadonlyNonEmptyArray'
 import { mergeAll } from 'ramda'
@@ -52,7 +58,7 @@ export const initPositions = (
   pipe(
     players,
     NEA.map(({ id }) => ({
-      [id]: { space: startIndex, returning: false },
+      [id]: startPosition,
     })),
     mergeAll
   )

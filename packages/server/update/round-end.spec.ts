@@ -1,7 +1,7 @@
 import * as O from 'fp-ts/lib/Option'
 import * as NEA from 'fp-ts/lib/ReadonlyNonEmptyArray'
-import { Treasure, TreasureStack } from '../../model'
-import { stackTreasuresIncludingLast } from './round-end'
+import { Position, Treasure, TreasureStack } from '../../model'
+import { sortPlayersByFurthest, stackTreasuresIncludingLast } from './round-end'
 
 describe('stackTreasures', () => {
   test('when there are none to stack, returns empty', () => {
@@ -72,5 +72,31 @@ describe('stackTreasures', () => {
     const expectedStack2 = NEA.of(xs[3])
     const result = stackTreasuresIncludingLast(O.none)(xs)
     expect(result).toEqual([expectedStack1, expectedStack2])
+  })
+})
+
+describe('sortPlayersByFurthest', () => {
+  const expectOrder = (positions: Array<[string, Position]>, order: string[]) =>
+    expect(positions.map(([x]) => x)).toEqual(order)
+
+  test('sorts the players so that first back is first and furthest away is last', () => {
+    expectOrder(
+      sortPlayersByFurthest({
+        atSpace2: { space: 2, returning: true },
+        atSpace1: { space: 1, returning: true },
+        returned3rd: { returnIndex: 2 },
+        returned1st: { returnIndex: 0 },
+        returned2nd: { returnIndex: 1 },
+        atSpace0: { space: 0, returning: true },
+      }),
+      [
+        'atSpace2',
+        'atSpace1',
+        'atSpace0',
+        'returned3rd',
+        'returned2nd',
+        'returned1st',
+      ]
+    )
   })
 })

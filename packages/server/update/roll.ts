@@ -1,8 +1,16 @@
 /* eslint-disable indent */
 import { pipe } from 'fp-ts/lib/pipeable'
 import { findLast } from 'fp-ts/lib/Array'
+import * as R from 'fp-ts/lib/Record'
 import { getOrElse } from 'fp-ts/lib/Option'
-import { Model, ActivePosition, Roll, Position, startIndex } from '../../model'
+import {
+  Model,
+  ActivePosition,
+  Roll,
+  Position,
+  startIndex,
+  isReturned,
+} from '../../model'
 import { randomInt } from '../util/utils'
 import { containsPlayer, currentPlayer } from '../game'
 
@@ -58,6 +66,13 @@ const nextSpace = (
       )
     }
 
+const nextReturnIndex = ({ positions }: Model['round']) =>
+  pipe(
+    positions,
+    R.collect((_, x) => (isReturned(x) ? x.returnIndex : -1)),
+    (xs) => Math.max(...xs) + 1
+  )
+
 export const update = (
   { space: currentSpace, returning }: ActivePosition,
   game: Model
@@ -75,7 +90,9 @@ export const update = (
   const returned = returning && space <= startIndex
 
   return {
-    position: returned ? 'returned' : { returning, space },
+    position: returned
+      ? { returnIndex: nextReturnIndex(game.round) }
+      : { returning, space },
     roll: { ...dieRolls, penalty, total },
   }
 }

@@ -3,5 +3,6 @@
     "**/*.d.ts": true,
     "**/*.d.ts.map": true,
     "**/*.js": true
-  }
+  },
+  "jest.pathToConfig": "jest.conf.unit.json"
 }

@@ -1,6 +1,6 @@
 {
   "preset": "ts-jest",
-  "rootDir": "src",
+  "rootDir": "packages",
   "testEnvironment": "node",
   "testRegex": ".(test|spec)\\.(jsx?|tsx?)$",
   "reporters": [

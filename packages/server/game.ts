@@ -8,6 +8,7 @@ import {
   startIndex,
   TurnPhase,
   ActivePosition,
+  isReturned,
 } from '../model'
 import updates from './update'
 import { logger } from './util/logger'
@@ -16,7 +17,6 @@ import { mergeRight, when, tap, equals } from 'ramda'
 export type Replace = {
   holdingIndex: number
 }
-
 type StartAction = 'roll' | 'return'
 type EndAction = 'pickup' | Replace | 'no-action'
 export type Action = StartAction | EndAction
@@ -33,7 +33,7 @@ export const containsPlayer = (
   targetSpace: number,
   positions: Array<Position>
 ): boolean =>
-  positions.some((x) => (x === 'returned' ? false : x.space === targetSpace))
+  positions.some((x) => (isReturned(x) ? false : x.space === targetSpace))
 
 const depleteOxygen = (
   game: Pick<Model, 'submarine' | 'players'>
@@ -48,7 +48,7 @@ const handleStartAction = (action: StartAction, game: Model): Model => {
   const player = currentPlayer(game).id
   const initialPosition = game.round.positions[player]!
 
-  if (initialPosition === 'returned') {
+  if (isReturned(initialPosition)) {
     logger.error('Unexpected start action for returned player', {
       player,
       action,
@@ -60,8 +60,6 @@ const handleStartAction = (action: StartAction, game: Model): Model => {
     action === 'roll' || initialPosition.space === startIndex
       ? updates.roll(initialPosition, game)
       : updates.roll({ ...initialPosition, returning: true }, game)
-
-  const returned = position === 'returned'
 
   return pipe(
     {
@@ -77,7 +75,7 @@ const handleStartAction = (action: StartAction, game: Model): Model => {
         roll,
       },
     },
-    when(() => returned, updates.nextTurn)
+    when(() => isReturned(position), updates.nextTurn)
   )
 }
 
@@ -112,7 +110,7 @@ const handleEndAction = (action: EndAction, game: Model): Model => {
     )
 
   return pipe(
-    position === 'returned'
+    isReturned(position)
       ? game
       : pipe(game, pickupUpdate(position), replaceUpdate(position)),
     updates.nextTurn
@@ -134,7 +132,7 @@ const handleAction = (action: Action) => (game: Model): Model => {
 
 const warnInvalidState = (game: Model): void => {
   const position = game.round.positions[currentPlayer(game).id]
-  if (position === 'returned') {
+  if (isReturned(position)) {
     logger.error('should not have action for player returned')
   }
 }

@@ -67,7 +67,7 @@ describe('rotateToNextPlayer', () => {
       round: {
         ...round,
         positions: {
-          bob: 'returned',
+          bob: { returnIndex: 0 },
           alice: { space: 1, returning: false },
         },
       },
@@ -82,7 +82,7 @@ describe('rotateToNextPlayer', () => {
         ...round,
         positions: {
           bob: { space: 1, returning: false },
-          alice: 'returned',
+          alice: { returnIndex: 0 },
         },
       },
     }
@@ -110,8 +110,8 @@ describe('rotateToNextPlayer', () => {
         ...threePlayerRound,
         positions: {
           bob: { space: 1, returning: false },
-          alice: 'returned',
-          frank: 'returned',
+          alice: { returnIndex: 0 },
+          frank: { returnIndex: 0 },
         },
       },
     }
@@ -125,7 +125,7 @@ describe('rotateToNextPlayer', () => {
         ...threePlayerRound,
         positions: {
           bob: { space: 1, returning: false },
-          alice: 'returned',
+          alice: { returnIndex: 0 },
           frank: { space: 1, returning: false },
         },
       },
@@ -141,7 +141,7 @@ describe('rotateToNextPlayer', () => {
         positions: {
           bob: { space: 1, returning: false },
           alice: { space: 1, returning: false },
-          frank: 'returned',
+          frank: { returnIndex: 0 },
         },
       },
     }
@@ -154,9 +154,9 @@ describe('rotateToNextPlayer', () => {
       round: {
         ...threePlayerRound,
         positions: {
-          bob: 'returned',
-          alice: 'returned',
-          frank: 'returned',
+          bob: { returnIndex: 0 },
+          alice: { returnIndex: 0 },
+          frank: { returnIndex: 0 },
         },
       },
     }

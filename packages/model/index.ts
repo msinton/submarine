@@ -46,7 +46,14 @@ export type ActivePosition = {
   returning: boolean
 }
 
-export type Position = ActivePosition | 'returned'
+export type Returned = {
+  returnIndex: number
+}
+
+export type Position = ActivePosition | Returned
+
+export const isReturned = (arg: Position): arg is Returned =>
+  Object.keys(arg).includes('returnIndex')
 
 export type Roll = {
   die1: number
@@ -60,7 +67,7 @@ export type TurnPhase = 'start' | 'end'
 export type Round = {
   phase: TurnPhase
   number: number
-  positions: { [playerId: string]: Position } // TODO players: {position, treasures}
+  positions: { [playerId: string]: Position } // TODO players: {position, treasures} move pos into there from here
   roll?: Roll
 }
 
@@ -98,3 +105,10 @@ export const isTreasure = (arg: Space): arg is Treasure =>
   isSingleTreasure(arg) || isTreasureStack(arg)
 
 export const startIndex = -1
+
+export const startPosition: ActivePosition = {
+  space: startIndex,
+  returning: false,
+}
+
+export * from './order'
