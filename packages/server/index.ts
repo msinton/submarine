@@ -11,7 +11,7 @@ import * as MAP from 'fp-ts/lib/Map'
 import * as O from 'fp-ts/lib/Option'
 import { Option } from 'fp-ts/lib/Option'
 import { pipe } from 'fp-ts/lib/pipeable'
-import { Model } from '../model'
+import { Model, UIModel } from '../model'
 import { tap } from 'ramda'
 import { toUI } from './ui'
 import { gameLoop } from './game'
@@ -26,6 +26,7 @@ const app: fastify.FastifyInstance<
   ServerResponse
 > = fastify()
 
+// ID of each is the session ID, so transition to game is seemless
 const waitingRooms: Map<string, WaitingRoom> = new Map()
 const games: Map<string, Model> = new Map()
 
@@ -36,8 +37,11 @@ app.setErrorHandler((err) => {
 
 export type WaitingRoom = {
   players: Array<PlayerData>
-  gameId?: string
 }
+
+type UIRoom = Array<{
+  name: string
+}>
 
 const newWaitingRoom: () => [string, WaitingRoom] = () => {
   const key = uuid()
@@ -55,7 +59,7 @@ const getUnfilledWaitingRoom: () => [string, WaitingRoom] = () =>
     O.getOrElse(newWaitingRoom)
   )
 
-const roomPlayers = (room: WaitingRoom) =>
+const roomPlayers = (room: WaitingRoom): UIRoom =>
   room.players.map(({ name }) => ({ name }))
 
 const joinRoom = (player: PlayerData) => (room: WaitingRoom) =>
@@ -91,24 +95,40 @@ app.post(
       O.map(tap(joinRoom({ id, name }))),
       O.map((room) => ({ id, roomId, room: roomPlayers(room) })),
       O.map(resolve),
-      O.getOrElse(() => reject(new Error('Not joinable')))
+      O.getOrElse(() => reject(new Error(`Not joinable roomId: ${roomId}`)))
     )
   }
 )
 
+const getGameOrRoom = (
+  id: string
+): Option<{ room: UIRoom } | { game: UIModel }> =>
+  pipe(
+    lookup(eqString)(id, games),
+    O.map(toUI),
+    O.map((game) => ({ game })),
+    O.altW(() =>
+      pipe(
+        lookup(eqString)(id, waitingRooms),
+        O.map((room) => ({ room: roomPlayers(room) }))
+      )
+    )
+  )
+
 app.get(
-  '/room',
+  '/sessions/:id',
   {
     schema: {
-      querystring: { id: Type.String() },
+      params: Type.Object({ id: Type.String() }),
     },
   },
-  async ({ query: { id } }) =>
+  async ({ params: { id } }) =>
     pipe(
-      MAP.lookup(eqString)(id, waitingRooms),
-      O.map((room) => ({ room: roomPlayers(room), gameId: room.gameId })),
+      getGameOrRoom(id),
       O.map(resolve),
-      O.getOrElse(() => reject(new Error('Not found')))
+      O.getOrElse(() =>
+        reject(new Error(`Not found room or game with id: ${id}`))
+      )
     )
 )
 
@@ -146,26 +166,9 @@ app.post(
       O.map((game) => gameLoop(action, game)),
       O.map(tap((game) => games.set(gameId, game))),
       O.map(toUI),
+      O.map((game) => ({ game })),
       O.map(resolve),
       O.getOrElse(() => reject(new Error('Bad gameId or player id')))
-    )
-)
-
-app.get(
-  '/game',
-  {
-    schema: {
-      querystring: {
-        id: Type.String(),
-      },
-    },
-  },
-  async ({ query: { id } }) =>
-    pipe(
-      lookup(eqString)(id, games),
-      O.map(toUI),
-      O.map(resolve),
-      O.getOrElse(() => reject(new Error('Bad gameId')))
     )
 )
 

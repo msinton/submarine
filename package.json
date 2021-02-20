@@ -16,7 +16,10 @@
   "dependencies": {
     "@sinclair/typebox": "^0.10.1",
     "fastify": "^2.14.1",
-    "fp-ts": "^2.8.3",
+    "fp-ts": "^2.9.5",
+    "io-ts-types": "^0.5.14",
+    "monocle-ts": "^2.3.5",
+    "newtype-ts": "^0.3.4",
     "ramda": "^0.27.0",
     "update": "^0.7.4",
     "uuid": "^8.1.0",
